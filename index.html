@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>혈자리 위치 찾기 · 오라이프밸런스</title>
+<meta name="description" content="영상으로 보는 혈자리 위치 — 가나다순 목록과 검색">
+<meta name="theme-color" content="#0E1724">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --ink:#0E1724; --ink2:#16233A; --line:rgba(217,184,119,.22);
+  --gold:#D9B877; --cream:#F4EEE3; --mute:rgba(244,238,227,.62);
+  --serif:"Gowun Batang",serif; --sans:"Pretendard",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--ink);color:var(--cream);font-family:var(--sans);min-height:100vh;
+  background-image:radial-gradient(120% 60% at 50% -10%,#1d2e4a 0%,var(--ink) 60%)}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 64px}
+header{padding:44px 0 20px;text-align:center}
+.eyebrow{font-size:11px;letter-spacing:.32em;color:var(--gold);text-transform:uppercase}
+h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,8vw,42px);margin:12px 0 8px;letter-spacing:-.01em}
+.sub{color:var(--mute);font-size:14px}
+.rule{width:44px;height:1px;background:var(--gold);margin:18px auto 0;opacity:.8}
+
+.tools{position:sticky;top:0;z-index:5;background:rgba(14,23,36,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  padding:12px 0 10px;border-bottom:1px solid var(--line);margin:0 -16px;padding-left:16px;padding-right:16px}
+.search{display:flex;align-items:center;gap:10px;background:var(--ink2);border:1px solid var(--line);border-radius:14px;padding:0 14px;height:48px}
+.search svg{flex:none;opacity:.7}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--cream);font:500 16px var(--sans)}
+.search input::placeholder{color:rgba(244,238,227,.4)}
+.search button{background:none;border:0;color:var(--mute);font-size:20px;line-height:1;display:none;cursor:pointer;padding:6px}
+.idx{display:flex;gap:6px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+.idx::-webkit-scrollbar{display:none}
+.idx button{flex:none;min-width:40px;height:34px;padding:0 10px;border-radius:17px;border:1px solid var(--line);background:none;
+  color:var(--cream);font:600 15px var(--sans);cursor:pointer}
+.idx button[disabled]{opacity:.25;cursor:default}
+.idx button.on{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+
+.group{margin-top:26px;scroll-margin-top:120px}
+.group h2{font-family:var(--serif);color:var(--gold);font-size:22px;font-weight:700;padding-bottom:8px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.item{display:flex;gap:14px;align-items:center;width:100%;text-align:left;background:none;border:0;color:inherit;
+  padding:12px 4px;border-bottom:1px solid rgba(244,238,227,.07);cursor:pointer;font-family:var(--sans)}
+.item:active{background:rgba(217,184,119,.06)}
+.thumb{flex:none;width:78px;aspect-ratio:3/4;border-radius:10px;overflow:hidden;position:relative;background:#0a111c;border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb::after{content:"";position:absolute;right:6px;bottom:6px;width:22px;height:22px;border-radius:50%;
+  background:rgba(14,23,36,.75) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 7l9 5-9 5z' fill='%23D9B877'/%3E%3C/svg%3E") center/16px no-repeat}
+.meta{flex:1;min-width:0}
+.name{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.name b{font-family:var(--serif);font-size:20px;font-weight:700}
+.name i{font-style:normal;font-size:13px;color:var(--mute)}
+.tags{display:flex;gap:6px;margin:5px 0 6px}
+.tag{font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--gold);border:1px solid var(--line);border-radius:6px;padding:2px 7px}
+.loc{font-size:13.5px;line-height:1.45;color:var(--mute);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.empty{display:none;text-align:center;color:var(--mute);padding:48px 0;font-size:15px}
+footer{margin-top:48px;text-align:center;color:rgba(244,238,227,.4);font-size:12px;letter-spacing:.08em}
+footer b{color:var(--gold);font-weight:600;letter-spacing:.24em;display:block;margin-bottom:6px;font-size:11px}
+
+/* player */
+.player{position:fixed;inset:0;z-index:20;background:#070C14;display:none;flex-direction:column}
+.player.open{display:flex}
+.pbar{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
+.pbar .t{font-family:var(--serif);font-size:19px;font-weight:700}
+.pbar .t span{font-family:var(--sans);font-size:12px;color:var(--gold);margin-left:8px;letter-spacing:.06em}
+.x{width:44px;height:44px;border-radius:22px;border:1px solid var(--line);background:none;color:var(--cream);font-size:22px;cursor:pointer}
+.stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:0 12px}
+.stage video{max-width:100%;max-height:100%;aspect-ratio:3/4;border-radius:14px;background:#000;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.pnav{display:flex;gap:10px;padding:12px 12px calc(14px + env(safe-area-inset-bottom))}
+.pnav button{flex:1;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--ink2);color:var(--cream);font:600 15px var(--sans);cursor:pointer}
+.pnav button.r{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">O Life Balance · Acupoint</div>
+    <h1>혈자리 위치 찾기</h1>
+    <p class="sub">이름을 누르면 위치 영상이 재생돼요</p>
+    <div class="rule"></div>
+  </header>
+
+  <div class="tools">
+    <label class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D9B877" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="혈 이름 검색 (예: 태충, ㅌㅊ)">
+      <button id="clr" aria-label="지우기">×</button>
+    </label>
+    <nav class="idx" id="idx"></nav>
+  </div>
+
+  <main id="list"></main>
+  <p class="empty" id="empty">찾는 혈자리가 없어요</p>
+
+  <footer><b>O LIFE BALANCE</b>오라이프밸런스 · 오쌤</footer>
+</div>
+
+<div class="player" id="player" role="dialog" aria-modal="true">
+  <div class="pbar"><div class="t" id="pt"></div><button class="x" id="px" aria-label="닫기">×</button></div>
+  <div class="stage"><video id="pv" controls playsinline preload="auto"></video></div>
+  <div class="pnav"><button id="pp">‹ 이전</button><button id="pn" class="r">다음 ›</button></div>
+</div>
+
+<script>
+const DATA = [
+  {id:"LR3",  name:"태충",   hj:"太衝",  mer:"간경",   part:"발",   loc:"첫 번째·두 번째 발가락 사이, 뼈가 만나는 곳 앞"},
+  {id:"SP3",  name:"태백",   hj:"太白",  mer:"비경",   part:"발",   loc:"볼록 솟은 뼈가 끝나는 지점, 움푹 들어간 곳"},
+  {id:"SP2",  name:"대도",   hj:"大都",  mer:"비경",   part:"발",   loc:"엄지발가락과 발이 만나는 지점, 뼈 아래 살 자리"},
+  {id:"KI1",  name:"용천",   hj:"湧泉",  mer:"신경",   part:"발",   loc:"발바닥 사람 인(人) 자 중간, 움푹 파인 곳"},
+  {id:"SP6",  name:"삼음교", hj:"三陰交", mer:"비경",   part:"다리", loc:"안쪽 복숭아뼈 위 손가락 네 개, 뼈 바로 뒤 움푹 파인 곳"},
+  {id:"KI3",  name:"태계",   hj:"太谿",  mer:"신경",   part:"발",   loc:"안쪽 복숭아뼈 바로 뒤, 움푹 파인 곳"},
+  {id:"ST45", name:"여태",   hj:"厲兌",  mer:"위경",   part:"발",   loc:"두 번째 발가락, 발톱 아래쪽 경계 바로 옆 살이 있는 곳"},
+  {id:"LR1",  name:"대돈",   hj:"大敦",  mer:"간경",   part:"발",   loc:"엄지발가락, 발톱 아래쪽 경계 바로 옆 살이 있는 곳"},
+  {id:"SP1",  name:"은백",   hj:"隱白",  mer:"비경",   part:"발",   loc:"엄지발가락 안쪽, 발톱 아래쪽 경계 바로 옆"},
+  {id:"ST43", name:"함곡",   hj:"陷谷",  mer:"위경",   part:"발",   loc:"두 번째·세 번째 발가락 사이, 움푹 파인 곳"},
+  {id:"SI3",  name:"후계",   hj:"後谿",  mer:"소장경", part:"손",   loc:"손금 끝, 뼈 바로 앞 움푹 파인 곳"},
+  {id:"LI3",  name:"삼간",   hj:"三間",  mer:"대장경", part:"손",   loc:"두 번째 손가락 뿌리, 동그란 뼈 바로 뒤 움푹 파인 곳"},
+  {id:"LI5",  name:"양계",   hj:"陽谿",  mer:"대장경", part:"손",   loc:"손목뼈 바로 앞, 움푹 파인 곳"},
+  {id:"SP9",  name:"음릉천", hj:"陰陵泉", mer:"비경",   part:"다리", loc:"다리 안쪽 뼈를 따라 올라가 무릎 아래 뼈에 막히는 곳"},
+  {id:"HT8",  name:"소부",   hj:"少府",  mer:"심경",   part:"손",   loc:"손바닥, 새끼손가락 끝이 닿는 자리"},
+  {id:"KI10", name:"음곡",   hj:"陰谷",  mer:"신경",   part:"다리", loc:"무릎 접히는 선 안쪽 끝, 인대 바로 앞 움푹 파인 곳"},
+  {id:"LR8",  name:"곡천",   hj:"曲泉",  mer:"간경",   part:"다리", loc:"무릎을 접으면 생기는 주름의 끝, 움푹 파인 곳"},
+  {id:"SI",   name:"소장경", hj:"小腸經", mer:"경락",   part:"손·팔", loc:"새끼손가락 쪽 손목뼈에서 뼈를 따라 이어지는 선", nohyeol:true},
+];
+
+const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const BASE = {"ㄲ":"ㄱ","ㄸ":"ㄷ","ㅃ":"ㅂ","ㅆ":"ㅅ","ㅉ":"ㅈ"};
+const INDEX = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const cho = s => [...s].map(c=>{const k=c.charCodeAt(0)-0xAC00;return k>=0&&k<11172?CHO[Math.floor(k/588)]:c}).join("");
+const head = s => {const c=cho(s)[0];return BASE[c]||c};
+const title = d => d.nohyeol ? d.name : d.name + "혈";
+
+DATA.sort((a,b)=>a.name.localeCompare(b.name,"ko"));
+const $ = id => document.getElementById(id);
+let shown = [];
+
+function render(q=""){
+  q = q.replace(/\s|혈$/g,"").trim();
+  const qc = /^[ㄱ-ㅎ]+$/.test(q);
+  shown = DATA.filter(d=>{
+    if(!q) return true;
+    const n = d.name;
+    return qc ? cho(n).startsWith(q) || cho(n).includes(q)
+              : n.includes(q) || d.id.toLowerCase()===q.toLowerCase() || d.hj.includes(q) || d.mer.includes(q);
+  });
+  const groups = {};
+  shown.forEach(d=>(groups[head(d.name)] ||= []).push(d));
+  $("list").innerHTML = INDEX.filter(k=>groups[k]).map(k=>`
+    <section class="group" id="g-${k}"><h2>${k}</h2>
+    ${groups[k].map(d=>`
+      <button class="item" data-id="${d.id}">
+        <span class="thumb"><img src="t/${d.id}.jpg" alt="" loading="lazy"></span>
+        <span class="meta">
+          <span class="name"><b>${title(d)}</b><i>${d.hj}</i></span>
+          <span class="tags"><span class="tag">${d.id}</span><span class="tag">${d.mer}</span><span class="tag">${d.part}</span></span>
+          <span class="loc">${d.loc}</span>
+        </span>
+      </button>`).join("")}
+    </section>`).join("");
+  $("empty").style.display = shown.length ? "none" : "block";
+  $("idx").innerHTML = INDEX.map(k=>`<button ${groups[k]?"":"disabled"} data-k="${k}">${k}</button>`).join("");
+  $("clr").style.display = q ? "block" : "none";
+}
+
+$("q").addEventListener("input", e=>render(e.target.value));
+$("clr").addEventListener("click", ()=>{$("q").value="";render();$("q").focus()});
+$("idx").addEventListener("click", e=>{
+  const k = e.target.dataset.k; if(!k) return;
+  document.querySelectorAll(".idx button").forEach(b=>b.classList.toggle("on",b===e.target));
+  $("g-"+k)?.scrollIntoView({behavior:"smooth"});
+});
+$("list").addEventListener("click", e=>{const b=e.target.closest(".item"); if(b) open(b.dataset.id)});
+
+const pv = $("pv"); let cur = -1;
+function open(id, push=true){
+  const list = shown.length ? shown : DATA;
+  cur = list.findIndex(d=>d.id===id);
+  if(cur<0){ cur = DATA.findIndex(d=>d.id===id); if(cur<0) return; }
+  const d = (list[cur]||DATA[cur]);
+  $("pt").innerHTML = `${title(d)}<span>${d.id}</span>`;
+  pv.src = `v/${d.id}.mp4`; pv.poster = `t/${d.id}.jpg`;
+  $("player").classList.add("open"); document.body.style.overflow="hidden";
+  pv.play().catch(()=>{});
+  if(push) history.replaceState(null,"","#"+d.id);
+}
+function close(){
+  pv.pause(); pv.removeAttribute("src"); pv.load();
+  $("player").classList.remove("open"); document.body.style.overflow="";
+  history.replaceState(null,"",location.pathname);
+}
+function step(n){const list = shown.length?shown:DATA; open(list[(cur+n+list.length)%list.length].id)}
+$("px").onclick = close; $("pp").onclick = ()=>step(-1); $("pn").onclick = ()=>step(1);
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") close(); });
+
+render();
+const h = decodeURIComponent(location.hash.slice(1));
+if(h && DATA.some(d=>d.id===h)) open(h,false);
+</script>
+</body>
+</html>
