@@ -190,36 +190,6 @@
   }, { threshold: 0.15 }).observe($('.hero'));
   deckLayout();
 
-  /* ───────── 마키 ───────── */
-  const STAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0l3 9 9 3-9 3-3 9-3-9-9-3 9-3z"/></svg>';
-  const WORDS = ['광고 영상', '상세페이지', '스토어 사진', '메뉴판', '릴스', '브랜드 콘텐츠'];
-  const rows = $$('.marquee-row').map((row, r) => {
-    const track = $('.marquee-track', row);
-    const list = r ? [...WORDS].reverse() : WORDS;
-    const set = list.map((w) => `<span>${w}${STAR}</span>`).join('');
-    track.innerHTML = set + set + set + set;
-    return { track, dir: +row.dataset.dir, x: 0, half: 0 };
-  });
-  let marqueeOn = false, marqueeRaf = 0, scrollVel = 0;
-  const marqueeMeasure = () => rows.forEach((r) => { r.half = r.track.scrollWidth / 4; });
-  function marqueeTick() {
-    scrollVel *= 0.9;
-    rows.forEach((r) => {
-      if (!r.half) return;
-      r.x += r.dir * (0.7 + Math.abs(scrollVel) * 0.12);
-      r.x = ((r.x % r.half) + r.half) % r.half;
-      r.track.style.transform = `translate3d(${-r.x}px,0,0) skewX(${clamp(scrollVel * -0.12, -8, 8)}deg)`;
-    });
-    marqueeRaf = marqueeOn ? requestAnimationFrame(marqueeTick) : 0;
-  }
-  marqueeMeasure();
-  if (document.fonts) document.fonts.ready.then(marqueeMeasure);
-  addEventListener('resize', marqueeMeasure);
-  if (!RM) new IntersectionObserver(([en]) => {
-    marqueeOn = en.isIntersecting;
-    if (marqueeOn && !marqueeRaf) marqueeRaf = requestAnimationFrame(marqueeTick);
-  }).observe($('.marquee'));
-
   /* ───────── 작업물 장면 ───────── */
   const scenesEl = $('#scenes');
   const scenes = WORKS.map((w, i) => {
@@ -314,7 +284,6 @@
     nav.classList.toggle('is-solid', y > 40);
     nav.classList.toggle('is-hidden', y > 400 && y > lastY + 2);
     if (y < lastY - 2) nav.classList.remove('is-hidden');
-    scrollVel += (y - lastY) * 0.5;
     lastY = y;
 
     // 장면: s는 "몇 번째 장면까지 넘어왔나"
