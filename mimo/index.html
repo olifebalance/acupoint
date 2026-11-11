@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MIMO — 시선이 멈추는 장면을 만듭니다</title>
+<meta name="description" content="미모 1인 광고 스튜디오. 광고 영상, 상세페이지, 스토어 콘텐츠를 기획부터 편집까지 직접 만듭니다.">
+<meta name="theme-color" content="#071321">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/pretendard-subset.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/unbounded-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script>document.documentElement.classList.add('js');try{if(sessionStorage.getItem('mimo-seen'))document.documentElement.classList.add('seen')}catch(e){}</script>
+</head>
+<body>
+<a class="skip" href="#work">작업물로 바로 가기</a>
+
+<div class="loader" aria-hidden="true">
+  <div class="loader-panel"></div><div class="loader-panel"></div>
+  <div class="loader-mark"><span>M</span><span>I</span><span>M</span><span>O</span></div>
+  <div class="loader-count"><b id="loader-num">0</b></div>
+</div>
+
+<div class="progress" aria-hidden="true"><i></i></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="cursor" aria-hidden="true"><span></span></div>
+
+<header class="nav">
+  <a class="logo" href="#home" aria-label="MIMO 처음으로"><b>MIMO</b><small>AD STUDIO</small></a>
+  <nav aria-label="주요 메뉴">
+    <a href="#work">작업물</a>
+    <a href="#services">서비스</a>
+    <a href="#process">진행 순서</a>
+    <a href="#about">미모 소개</a>
+  </nav>
+  <a class="btn btn-lime btn-sm" href="#contact">제작 문의</a>
+</header>
+
+<main>
+<!-- ───────── HERO ───────── -->
+<section class="hero" id="home" aria-labelledby="hero-title">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="hero-copy">
+    <p class="eyebrow"><i class="dot"></i>MIMO · 1인 광고 스튜디오</p>
+    <h1 id="hero-title">
+      <span class="line"><span class="line-in"><span class="rot" aria-live="off"><span class="rot-word is-on">시선이</span><span class="rot-word">발길이</span><span class="rot-word">스크롤이</span></span></span></span>
+      <span class="line"><span class="line-in">멈추는 <em>장면</em>을</span></span>
+      <span class="line"><span class="line-in">만듭니다.</span></span>
+    </h1>
+    <p class="hero-sub">광고 영상 · 상세페이지 · 스토어 콘텐츠.<br>기획부터 편집까지, 미모가 직접 만듭니다.</p>
+    <div class="hero-cta">
+      <a class="btn btn-lime magnetic" href="#work"><span>작업물 보기</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      <a class="btn btn-ghost magnetic" href="#contact"><span>제작 문의</span></a>
+    </div>
+  </div>
+
+  <div class="deck-wrap">
+    <div class="deck" id="deck" role="group" aria-roledescription="carousel" aria-label="작업물 미리보기" data-cursor="드래그"></div>
+    <div class="deck-meta">
+      <button class="deck-arrow" id="deck-prev" aria-label="이전 작품"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+      <p class="deck-cap" aria-live="polite"><b id="deck-title"></b><span id="deck-client"></span></p>
+      <button class="deck-arrow" id="deck-next" aria-label="다음 작품"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>
+
+  <a class="scroll-cue" href="#work" aria-label="아래로"><span>SCROLL</span><i></i></a>
+</section>
+
+<!-- ───────── MARQUEE ───────── -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-row" data-dir="1"><div class="marquee-track"></div></div>
+  <div class="marquee-row marquee-row--outline" data-dir="-1"><div class="marquee-track"></div></div>
+</div>
+
+<!-- ───────── WORK ───────── -->
+<section class="work" id="work" aria-labelledby="work-title">
+  <div class="section-head wrap">
+    <p class="kicker" data-reveal>WORK <span>01–05</span></p>
+    <h2 id="work-title" data-split>짧은 순간, 오래 남는 장면.</h2>
+    <p class="lead" data-reveal>스토어의 분위기도, 제품의 매력도.<br>직접 만든 영상으로 먼저 보여드릴게요.</p>
+  </div>
+  <div class="scenes" id="scenes"></div>
+  <p class="work-note wrap">브랜드 작품과 창작 콘셉트를 구분해 소개합니다. 영상 속 행사·프로모션은 제작 당시의 내용입니다.</p>
+</section>
+
+<!-- ───────── SOLO (1인 스튜디오) ───────── -->
+<section class="solo" id="solo" aria-label="미모가 일하는 방식">
+  <div class="wrap">
+    <p class="kicker" data-reveal>ONE-PERSON STUDIO</p>
+    <p class="solo-text" id="solo-text">큰 대행사는 아닙니다. <mark>미모 한 사람</mark>이 듣고, 기획하고, 만들고, 다듬습니다. 중간 단계가 없어서 <mark>부담은 가볍게.</mark> 만드는 손이 처음부터 끝까지 같아서 <mark>결과는 단단하게.</mark> 작은 스토어도 좋은 광고를 가질 수 있어야 하니까요.</p>
+    <ul class="solo-points">
+      <li data-reveal><b>01</b><h3>직접 만듭니다</h3><p>상담한 사람이 그대로 만듭니다. 전달하다 달라지는 일이 없습니다.</p></li>
+      <li data-reveal><b>02</b><h3>범위부터 정합니다</h3><p>작업 기간, 수정 횟수, 추가 비용, 제공 파일을 견적에 함께 적어 드립니다.</p></li>
+      <li data-reveal><b>03</b><h3>먼저 보여드립니다</h3><p>짧은 영상이나 디자인 시안으로 방향을 먼저 맞추고 시작합니다.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ───────── SERVICES ───────── -->
+<section class="services" id="services" aria-labelledby="services-title">
+  <div class="section-head wrap">
+    <p class="kicker" data-reveal>SERVICES</p>
+    <h2 id="services-title" data-split>스토어에 필요한 만큼, 함께 정하고 만듭니다.</h2>
+    <p class="lead" data-reveal>한 편의 영상부터 하나의 브랜드 분위기까지.<br>목적과 사용할 채널에 맞춰 제작합니다.</p>
+  </div>
+  <div class="cards wrap">
+    <article class="card" data-reveal>
+      <span class="card-no">01</span>
+      <h3>광고 영상 · 릴스</h3>
+      <p class="card-tag">제품의 매력을 짧고 선명하게</p>
+      <p>음식, 패션, 제품, 스토어 오픈 소식을 영상으로 전합니다. 보유한 사진·영상과 전달할 메시지를 바탕으로 구성을 잡습니다.</p>
+      <dl><dt>견적 기준</dt><dd>영상 길이 · 장면 수 · 생성 및 편집 범위 · 자막과 음성 · 화면 비율</dd>
+      <dt>제공 범위</dt><dd>협의한 해상도·비율의 최종 영상. 추가 비율과 편집 원본은 별도 협의합니다.</dd></dl>
+    </article>
+    <article class="card" data-reveal>
+      <span class="card-no">02</span>
+      <h3>상세페이지 · 제품 이미지</h3>
+      <p class="card-tag">궁금한 정보를, 구매로 이어지게</p>
+      <p>제품의 특징과 사용 장면을 읽기 쉬운 순서로 정리합니다. 사진, 설명, 구매에 필요한 정보를 하나의 흐름으로 연결합니다.</p>
+      <dl><dt>견적 기준</dt><dd>제품 수 · 페이지 분량 · 촬영 자료 유무 · 합성 및 이미지 제작 범위</dd>
+      <dt>제공 범위</dt><dd>협의한 크기의 최종 이미지. 문구 작성과 원본 파일 범위는 사전에 정합니다.</dd></dl>
+    </article>
+    <article class="card" data-reveal>
+      <span class="card-no">03</span>
+      <h3>스토어 콘텐츠 · 메뉴판</h3>
+      <p class="card-tag">매일 만나는 브랜드의 인상</p>
+      <p>SNS 게시물, 프로모션 이미지, 메뉴판 등 스토어 운영에 필요한 콘텐츠를 같은 분위기로 맞춥니다.</p>
+      <dl><dt>견적 기준</dt><dd>품목과 시안 수 · 문구 분량 · 게시 또는 인쇄 규격 · 제공 자료 상태</dd>
+      <dt>제공 범위</dt><dd>선택한 채널에 맞는 최종 파일. 인쇄용 파일은 사양을 확인한 뒤 안내합니다.</dd></dl>
+    </article>
+  </div>
+  <div class="price-note wrap" data-reveal>
+    <p><b>가격과 일정은 작업 범위를 정한 뒤 안내합니다.</b><br>제작을 시작하기 전에 포함되는 내용을 확인할 수 있습니다.</p>
+    <a class="btn btn-ghost magnetic" href="#contact"><span>제작 문의</span></a>
+  </div>
+</section>
+
+<!-- ───────── PROCESS ───────── -->
+<section class="process" id="process" aria-labelledby="process-title">
+  <div class="section-head wrap">
+    <p class="kicker" data-reveal>PROCESS</p>
+    <h2 id="process-title" data-split>처음 의뢰해도 괜찮아요.</h2>
+  </div>
+  <ol class="steps wrap" id="steps">
+    <li><span class="step-no">01</span><h3>이야기 나누기</h3><p>제품과 목적, 원하는 분위기, 사용할 곳을 알려주세요.</p></li>
+    <li><span class="step-no">02</span><h3>범위 정하기</h3><p>구성과 견적, 일정, 수정·제공 범위를 확인합니다.</p></li>
+    <li><span class="step-no">03</span><h3>시안 확인하기</h3><p>짧은 영상이나 디자인 시안으로 방향을 먼저 맞춥니다.</p></li>
+    <li><span class="step-no">04</span><h3>완성해서 전달하기</h3><p>확정한 내용을 반영해 약속한 형식으로 전달합니다.</p></li>
+  </ol>
+</section>
+
+<!-- ───────── ABOUT ───────── -->
+<section class="about" id="about" aria-labelledby="about-title">
+  <div class="about-grid wrap">
+    <div class="about-stage" data-reveal>
+      <video id="mimo-video" poster="assets/mimo-idle.jpg" muted loop playsinline preload="none" aria-label="네이비 슈트를 입은 미모 캐릭터"></video>
+      <div class="about-actions" role="group" aria-label="미모 움직임 바꾸기">
+        <button data-clip="welcome" data-sound="1"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zM16 8.5a5 5 0 010 7"/></svg>인사 듣기</button>
+        <button data-clip="hand">손짓</button>
+        <button data-clip="smile">미소</button>
+      </div>
+    </div>
+    <div class="about-copy">
+      <p class="kicker" data-reveal>MIMO · BEHIND THE SCENES</p>
+      <h2 id="about-title" data-split>스토어의 하루를 알기에, 보여줄 장면을 찾습니다.</h2>
+      <p data-reveal>아울렛에서 스토어를 운영하며 고객을 만납니다. 어디에서 걸음을 멈추는지, 어떤 설명에 귀를 기울이는지. 그 경험을 광고와 콘텐츠에 담습니다.</p>
+      <p data-reveal>미모는 스토어의 이야기를 함께 정리하고, 고객에게 보여줄 장면으로 만드는 제작 파트너입니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── CONTACT ───────── -->
+<section class="contact" id="contact" aria-labelledby="contact-title">
+  <div class="contact-grid wrap">
+    <div class="contact-copy">
+      <p class="kicker" data-reveal>CONTACT</p>
+      <h2 id="contact-title" data-split>다음 장면은, 당신의 스토어.</h2>
+      <p class="lead" data-reveal>아직 구체적이지 않아도 괜찮아요.<br>지금 생각하는 것부터 적어주세요.</p>
+    </div>
+    <form class="brief" id="brief" data-reveal novalidate>
+      <label for="service">어떤 작업이 필요한가요?</label>
+      <div class="chips" role="radiogroup" aria-label="필요한 작업">
+        <label><input type="radio" name="service" value="광고 영상 · 릴스" checked><span>광고 영상 · 릴스</span></label>
+        <label><input type="radio" name="service" value="상세페이지 · 제품 이미지"><span>상세페이지 · 제품 이미지</span></label>
+        <label><input type="radio" name="service" value="스토어 콘텐츠 · 메뉴판"><span>스토어 콘텐츠 · 메뉴판</span></label>
+        <label><input type="radio" name="service" value="먼저 상담하고 싶어요"><span>먼저 상담하고 싶어요</span></label>
+      </div>
+      <label for="story">스토어와 만들고 싶은 이야기</label>
+      <textarea id="story" name="story" rows="3" maxlength="2000" required placeholder="예: 작은 디저트 스토어예요. 새로 나온 케이크를 릴스로 소개하고 싶어요."></textarea>
+      <div class="row2">
+        <div><label for="channel">사용할 곳 <small>선택</small></label><input id="channel" name="channel" maxlength="150" placeholder="인스타그램, 스토어 화면 등"></div>
+        <div><label for="deadline">희망 일정 <small>선택</small></label><input id="deadline" name="deadline" maxlength="150" placeholder="미정이어도 괜찮아요"></div>
+      </div>
+      <button class="btn btn-lime" type="submit"><span>문의 내용 만들기</span></button>
+      <div class="brief-out" id="brief-out" hidden>
+        <label for="brief-output">정리한 문의 내용</label>
+        <textarea id="brief-output" rows="7" readonly></textarea>
+        <button class="btn btn-ghost" type="button" id="brief-copy"><span>문의 내용 복사</span></button>
+      </div>
+      <p class="brief-note">이 양식은 문의 내용을 정리·복사하며, 메시지를 전송하지 않습니다.</p>
+    </form>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="vtext" id="vtext">
+    <video muted loop playsinline preload="none" poster="assets/dessert.jpg" aria-hidden="true"></video>
+    <div class="vtext-mask" aria-hidden="true"><span>MIMO</span></div>
+  </div>
+  <div class="footer-row wrap">
+    <p>당신의 스토어에, 시선을 만드는 이야기.</p>
+    <p>광고 영상 · 브랜드 콘텐츠</p>
+    <a href="#home">맨 위로 ↑</a>
+  </div>
+</footer>
+
+<dialog class="player" id="player" aria-labelledby="player-title">
+  <button class="player-close" id="player-close" aria-label="영상 닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <video id="player-video" controls playsinline></video>
+  <p class="player-cap"><b id="player-title"></b><span id="player-client"></span></p>
+</dialog>
+
+<noscript><style>.loader{display:none}</style><p style="padding:24px;color:#F2F4F7">작업물 영상을 보려면 자바스크립트를 켜 주세요.</p></noscript>
+<script src="app.js" defer></script>
+</body>
+</html>
