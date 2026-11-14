@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>스레드 마을</title>
+<meta name="description" content="스친들의 가게가 모인 마을. 걸어 다니며 가게에 들르면 주인의 소개를 보고 스레드로 놀러 갈 수 있어요.">
+<meta name="theme-color" content="#dbe7c3">
+<style>
+  @font-face{font-family:Pretendard;src:url(fonts/pretendard-subset.woff2) format("woff2");font-weight:100 900;font-display:swap}
+  :root{color-scheme:light;--ink:#3d4650;--paper:#fffdf6;--hot:#ff7a59;--grass:#dbe7c3}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--grass);color:var(--ink);font-family:Pretendard,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;-webkit-font-smoothing:antialiased;word-break:keep-all;overflow:hidden;overscroll-behavior:none}
+  #town{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;user-select:none;-webkit-user-select:none;font-family:inherit}
+  #town .lot{cursor:pointer;outline:none}
+  #town .lot:focus-visible>rect:last-child{stroke:var(--hot);stroke-width:5;stroke-dasharray:10 8;rx:14px}
+  #me .leg{transform-box:fill-box;transform-origin:50% 0}
+  #me.walking .leg.l{animation:leg .36s ease-in-out infinite alternate}
+  #me.walking .leg.r{animation:leg .36s ease-in-out infinite alternate-reverse}
+  #me.walking .body{animation:bob .18s ease-in-out infinite alternate}
+  @keyframes leg{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}
+  @keyframes bob{from{translate:0 0}to{translate:0 -2.5px}}
+
+  .bar{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));pointer-events:none}
+  .bar>*{pointer-events:auto}
+  .brand{margin:0 auto 0 0;padding:8px 14px;border-radius:14px;background:var(--paper);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);line-height:1.2}
+  .brand b{display:block;font-size:19px;font-weight:900;letter-spacing:-.03em}
+  .brand span{font-size:12px;font-weight:700;opacity:.75}
+  .chip{height:44px;padding:0 14px;border-radius:12px;background:var(--paper);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .chip:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+  .dock{position:fixed;left:0;right:0;bottom:0;display:grid;justify-items:center;gap:10px;padding:0 16px max(18px,env(safe-area-inset-bottom,0px));pointer-events:none}
+  .dock>*{pointer-events:auto}
+  #visit{height:54px;padding:0 24px;border-radius:16px;background:var(--hot);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font:inherit;font-size:17px;font-weight:900;color:#fff;cursor:pointer}
+  #visit[hidden]{display:none}
+  #hint{margin:0;padding:8px 14px;border-radius:999px;background:rgba(255,253,246,.92);font-size:13px;font-weight:700;transition:opacity .8s}
+  #hint.gone{opacity:0}
+  #hint .pc{display:none}
+  @media (hover:hover) and (pointer:fine){#hint .pc{display:inline}}
+  :focus-visible{outline:3px solid var(--hot);outline-offset:3px}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+
+  dialog{border:0;padding:0;background:transparent;max-width:none;max-height:none;color:var(--ink)}
+  dialog::backdrop{background:rgba(40,46,36,.45)}
+  .sheet{position:relative;width:min(88vw,400px);padding:26px 24px 24px;border-radius:20px;background:var(--paper);border:2px solid var(--ink);box-shadow:8px 8px 0 var(--c,var(--ink))}
+  .sheet .addr{margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:.03em;opacity:.7}
+  .sheet h2{margin:0;font-size:27px;font-weight:900;letter-spacing:-.04em;line-height:1.2;padding-right:44px}
+  .sheet .handle{margin:4px 0 0;font-size:14px;opacity:.75}
+  .sheet .intro{margin:16px 0 0;font-size:16px;line-height:1.65;white-space:pre-line}
+  .sheet .go{display:flex;align-items:center;justify-content:center;margin-top:20px;height:52px;border-radius:14px;background:var(--ink);color:var(--paper);font-weight:800;text-decoration:none;border:0;width:100%;font:inherit;font-weight:800;font-size:16px;cursor:pointer}
+  .sheet .go[hidden]{display:none}
+  .x{position:absolute;z-index:2;right:12px;top:12px;width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);background:var(--paper);font-size:20px;line-height:1;cursor:pointer;color:var(--ink)}
+  .sheet label.f{display:block;margin:16px 0 8px;font-size:14px;font-weight:800}
+  .sheet input[type=text]{width:100%;height:50px;padding:0 14px;border-radius:12px;border:2px solid var(--ink);background:#fff;font:inherit;font-size:16px;color:var(--ink)}
+  .colors{display:flex;gap:10px;flex-wrap:wrap}
+  .colors label{position:relative;cursor:pointer}
+  .colors input{position:absolute;opacity:0}
+  .colors span{display:block;width:40px;height:40px;border-radius:50%;border:2px solid var(--ink)}
+  .colors input:checked+span{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--ink)}
+  .colors input:focus-visible+span{outline:3px solid var(--hot);outline-offset:6px}
+  .fine{margin:12px 0 0;font-size:12px;opacity:.7}
+  @media (prefers-reduced-motion:reduce){#hint{transition:none}}
+</style>
+</head>
+<body>
+<svg id="town" role="application" aria-label="스레드 마을 지도. 집을 누르면 그 집으로 걸어갑니다."></svg>
+
+<header class="bar">
+  <p class="brand"><b>스레드 마을</b><span id="count"></span></p>
+  <button class="chip" id="map" aria-pressed="false">마을 전체 보기</button>
+  <button class="chip" id="rename" aria-label="닉네임과 옷 색 바꾸기">내 손님</button>
+</header>
+
+<div class="dock">
+  <button id="visit" hidden></button>
+  <p id="hint">가고 싶은 집을 누르면 걸어가요<span class="pc"> · 방향키로도 움직여요</span></p>
+</div>
+
+<dialog id="card" aria-labelledby="c-name">
+  <div class="sheet">
+    <button class="x" id="c-close" aria-label="닫기">×</button>
+    <p class="addr" id="c-addr"></p>
+    <h2 id="c-name"></h2>
+    <p class="handle" id="c-handle"></p>
+    <p class="intro" id="c-intro"></p>
+    <a class="go" id="c-go" target="_blank" rel="noopener noreferrer"></a>
+  </div>
+</dialog>
+
+<dialog id="gate" aria-labelledby="g-title">
+  <form class="sheet" id="g-form" method="dialog">
+    <p class="addr">스레드 마을에 오신 걸 환영해요</p>
+    <h2 id="g-title">어떤 손님으로 들어갈까요?</h2>
+    <label class="f" for="g-name">닉네임</label>
+    <input type="text" id="g-name" maxlength="8" placeholder="손님" autocomplete="nickname">
+    <p class="f" style="margin:16px 0 8px;font-size:14px;font-weight:800">옷 색</p>
+    <div class="colors" id="g-colors"></div>
+    <button class="go" type="submit">마을 들어가기</button>
+    <p class="fine">로그인은 없어요. 닉네임과 색은 이 기기에만 저장돼요.</p>
+  </form>
+</dialog>
+
+<script src="residents.js"></script>
+<script src="houses.js"></script>
+<script src="town.js"></script>
+</body>
+</html>
