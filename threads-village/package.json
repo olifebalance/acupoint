@@ -1,0 +1,14 @@
+{
+  "name": "threads-village",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "7.1.9"
+  }
+}
