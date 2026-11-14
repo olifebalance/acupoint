@@ -1,4 +1,4 @@
-// 스레드 마을: 위에서 내려다보는 마을을 작은 손님이 걸어 다닌다.
+// 스친 마을: 위에서 내려다보는 마을을 작은 손님이 걸어 다닌다.
 // 가고 싶은 집을 누르면 길을 따라 걸어가고, 문 앞에 서면 소개 카드가 열린다.
 (() => {
   const { HOUSES, DECOR } = window.TOWN_ART;
@@ -238,7 +238,7 @@
   /* ───── 소개 카드 ───── */
   const dialog = $('#card');
   function openCard(l) {
-    $('#c-addr').textContent = `스레드 마을 · ${SLOT_NAME[l.slot]}`;
+    $('#c-addr').textContent = `스친 마을 · ${SLOT_NAME[l.slot]}`;
     const go = $('#c-go');
     if (l.r) {
       $('#c-name').textContent = l.r.name;
