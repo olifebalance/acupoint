@@ -1,7 +1,7 @@
 // 스친 마을: 위에서 내려다보는 마을을 작은 손님이 걸어 다닌다.
 // 가고 싶은 집을 누르면 길을 따라 걸어가고, 문 앞에 서면 소개 카드가 열린다.
 (() => {
-  const { HOUSES, DECOR } = window.TOWN_ART;
+  const { HOUSES, DECOR, lightsOf } = window.TOWN_ART;
   const RESIDENTS = window.RESIDENTS;
   const $ = (s, r = document) => r.querySelector(s);
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -82,7 +82,7 @@
   /* ───── 그리기 ───── */
   const svg = $('#town');
   const at = (x, y, inner, o = '') => `<g transform="translate(${x} ${y})" ${o}>${inner}</g>`;
-  let ground = `<rect x="-600" y="-600" width="${W + 1200}" height="${H + 1200}" fill="#dbe7c3"/>`;
+  let ground = `<rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#dbe7c3"/>`;
   // 풀밭 얼룩
   [[420, 250, 300, 90], [1250, 640, 260, 80], [520, 1010, 320, 90], [1500, 1330, 300, 70], [1900, 420, 260, 110], [2080, 1080, 240, 120], [80, 760, 120, 260]].forEach(([x, y, rx, ry]) => { ground += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#cfdfb2"/>`; });
   // 쉼터 마당
@@ -95,23 +95,26 @@
 
   // 세워 놓는 것들: 집과 꾸밈. y(발 위치)가 클수록 앞에 그린다.
   const things = [];
+  let lights = '';
   lots.forEach((l) => {
     const kind = l.r ? l.r.house : 'vacant';
     const label = l.r ? `${l.r.name} 방문하기` : `빈 터 ${SLOT_NAME[l.slot]} 입점 안내 보기`;
+    lights += at(l.x, l.y, lightsOf(kind));
     things.push({ y: l.y, html: at(l.x, l.y, HOUSES[kind]() + `<rect x="${-l.w / 2 - 10}" y="-200" width="${l.w + 20}" height="216" fill="transparent"/>`, `class="lot" data-slot="${l.slot}" tabindex="0" role="button" aria-label="${label}"`) });
   });
   const put = (x, y, html) => things.push({ y, html: at(x, y, html) });
   put(870, 398, DECOR.welcome());
   [[130, 390, 1.1], [1700, 380, 1.2], [110, 1010, 1], [1690, 1090, 1.1], [1000, 250, 0.9], [740, 250, 0.9], [220, 1330, 1.1], [1010, 1350, 1]].forEach(([x, y, s], i) => put(x, y, DECOR.tree(s, i % 2 ? '#8fbb6a' : '#7fae5e')));
   [[250, 520], [1500, 520], [640, 900], [1110, 900], [1300, 1270], [480, 1270], [90, 620], [1680, 700]].forEach(([x, y], i) => put(x, y, i % 3 === 0 ? DECOR.flowers(['#ff9aa2', '#ffd166', '#b8a5e3'][i % 3]) : DECOR.bush(i % 2 ? '#9cc57a' : '#8fbb6a')));
-  [[760, 520], [980, 520], [760, 900], [980, 900], [452, 1262], [1480, 890]].forEach(([x, y]) => put(x, y, DECOR.lamp()));
+  [[760, 520], [980, 520], [760, 900], [980, 900], [452, 1262], [1480, 890]].forEach(([x, y]) => { put(x, y, DECOR.lamp()); lights += at(x, y, lightsOf('lamp')); });
   // 쉼터: 소나무, 석등, 탑, 긴 의자
   [[1800, 660, 1.2], [2190, 700, 1.3], [2150, 980, 1.1], [1850, 560, 1]].forEach(([x, y, s]) => put(x, y, DECOR.pine(s)));
-  put(1890, 800, DECOR.stoneLamp()); put(2110, 800, DECOR.stoneLamp()); put(2090, 950, DECOR.pagoda()); put(1900, 1000, DECOR.bench()); put(2010, 1010, DECOR.bench());
+  [[1890, 800], [2110, 800]].forEach(([x, y]) => { put(x, y, DECOR.stoneLamp()); lights += at(x, y, lightsOf('stoneLamp')); }); put(2090, 950, DECOR.pagoda()); put(1900, 1000, DECOR.bench()); put(2010, 1010, DECOR.bench());
   things.sort((a, b) => a.y - b.y);
 
-  svg.innerHTML = `<defs><linearGradient id="t-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57e3d0"/><stop offset=".5" stop-color="#8b7cf6"/><stop offset="1" stop-color="#ff7ab8"/></linearGradient></defs>`
-    + `<g id="ground">${ground}</g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`;
+  svg.innerHTML = `<defs><linearGradient id="t-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57e3d0"/><stop offset=".5" stop-color="#8b7cf6"/><stop offset="1" stop-color="#ff7ab8"/></linearGradient><radialGradient id="t-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>`
+    + `<g id="ground">${ground}</g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
+    + `<rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
   const thingsG = $('#things'), thingEls = [...thingsG.children];
   const marker = $('#marker');
 
@@ -162,6 +165,9 @@
     marker.innerHTML = '';
     if (goal) { const l = goal; goal = null; openCard(l); }
   }
+  // 밤: 마을 위에 어두운 막을 덮고, 그 위에 창문·가로등 불빛을 켠다
+  const darkEl = $('#dark'), lightsEl = $('#lights');
+  let night = 0, nightTarget = 0;
   let last = performance.now(), near = null;
   function tick(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -196,6 +202,11 @@
       visitBtn.hidden = !n;
       if (n) visitBtn.textContent = n.r ? `${n.r.name} 방문하기` : '빈 터 둘러보기';
     }
+    if (Math.abs(nightTarget - night) > 0.001) {
+      night = RM ? nightTarget : night + (nightTarget - night) * Math.min(1, dt * 1.6);
+      darkEl.setAttribute('opacity', (night * 0.66).toFixed(3));
+      lightsEl.setAttribute('opacity', clamp((night - 0.3) / 0.5, 0, 1).toFixed(3));
+    }
     frame(now);
     requestAnimationFrame(tick);
   }
@@ -229,8 +240,11 @@
   const hint = { done() { hintN.classList.add('gone'); } };
   const visitBtn = $('#visit');
   visitBtn.addEventListener('click', () => { if (near) openCard(near); });
+  const nightBtn = $('#night');
+  function setNight(on) { nightTarget = on ? 1 : 0; nightBtn.textContent = on ? '낮 보기' : '밤 보기'; nightBtn.setAttribute('aria-pressed', on); }
+  nightBtn.addEventListener('click', () => setNight(!nightTarget));
   const mapBtn = $('#map');
-  function setOverview(on) { cam.overview = on; mapBtn.textContent = on ? '내 자리로' : '마을 전체 보기'; mapBtn.setAttribute('aria-pressed', on); }
+  function setOverview(on) { cam.overview = on; mapBtn.textContent = on ? '내 자리로' : '전체 보기'; mapBtn.setAttribute('aria-pressed', on); }
   mapBtn.addEventListener('click', () => setOverview(!cam.overview));
   const filled = lots.filter((l) => l.r).length;
   $('#count').textContent = `입점 ${filled}곳 · 빈 터 ${lots.length - filled}곳`;
@@ -280,6 +294,6 @@
   enter(store.get('town-name') || '손님');
   if (!store.get('town-name') && !new URLSearchParams(location.search).has('skip')) gate.showModal();
 
-  window.__town = { pos, lots, walkTo, route, cam, setOverview, nodes };
+  window.__town = { pos, lots, walkTo, route, cam, setOverview, setNight, nodes };
   requestAnimationFrame(tick);
 })();

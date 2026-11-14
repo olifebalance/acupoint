@@ -161,5 +161,32 @@
     flowers: (c = '#ff9aa2') => [[-14, 0], [0, -6], [14, 2]].map(([x, y]) => L(`M${x} ${y} v-12`, '#5f8f4a', 2.5) + C(x, y - 14, 5, c) + C(x, y - 14, 2, '#fff3b0')).join(''),
   };
 
-  window.TOWN_ART = { HOUSES, DECOR };
+  // 밤에 불이 들어오는 자리. [x, y, 너비, 높이, 색, 모서리] 또는 둥근 불 {c:[x, y, 반지름], f:색}.
+  const WARM = '#ffd98a';
+  const LIGHTS = {
+    mimo: [E(0, -159, 190, 44, 'url(#t-glow)') + R(-156, -176, 312, 34, '#E7FC66', 10) + T(0, -159, 'MIMO', '#0a1728', 22, 'letter-spacing="3"'),
+      [-113, -121, 116, 68, '#9fd4ff', 5], P('M-66 -104 l30 17 l-30 17Z', '#12233b'), { c: [-150, -196, 9], f: '#E7FC66' }, { c: [150, -196, 9], f: '#ff9a7a' }],
+    harry: [[14, -78, 46, 40, WARM, 3], { c: [-2, -168, 5], f: '#fff2a8' }, { c: [14, -196, 4], f: '#fff2a8' }],
+    ohssam: [[-8, -64, 78, 46, '#ffcf86', 4]],
+    temple: [[-84, -104, 38, 46, WARM, 3], [46, -104, 38, 46, WARM, 3], { c: [0, -206, 9], f: '#ffe27a' }],
+    zcre: [{ c: [0, -53, 34], f: '#b9a8ff' }, [-80, -6, 160, 3, '#b9a8ff', 1], [-80, -92, 3, 86, '#7ff0e0', 1]],
+    sodam: [{ c: [-30, -62, 30], f: '#fff1c4' }],
+    lomaximo: [[4, -62, 60, 44, WARM, 3]],
+    loha: [[-66, -70, 64, 44, WARM, 3], { c: [0, -136, 20], f: '#fff1c4' }],
+    dalgo: [[-48, -66, 44, 40, '#ffe9a8', 3]],
+    hespera: [[14, -62, 44, 40, '#ffb65a', 3], [-91, -82, 14, 18, '#ffcf6a', 3], [35, -154, 10, 12, '#ffcf6a', 2]],
+    onyu: [[-70, -52, 70, 36, WARM, 3]],
+    hyekyung: [[-70, -64, 62, 42, WARM, 3]],
+    lamp: [[-11, -84, 22, 16, '#fff1c4', 5]],
+    stoneLamp: [[-6, -47, 12, 9, '#ffe9a8', 2]],
+  };
+  /** 불빛 그림: 번지는 빛을 먼저 깔고, 불 켜진 창을 그 위에 그린다. */
+  const lightsOf = (kind) => (LIGHTS[kind] || []).map((l) => {
+    if (typeof l === 'string') return l;
+    if (l.c) { const [x, y, r] = l.c; return C(x, y, r * 2.6, 'url(#t-glow)', 'opacity=".8"') + C(x, y, r, l.f); }
+    const [x, y, w, h, f, rx] = l;
+    return E(x + w / 2, y + h / 2, Math.max(w, 40) * 1.15, Math.max(h, 40) * 1.15, 'url(#t-glow)') + R(x, y, w, h, f, rx);
+  }).join('');
+
+  window.TOWN_ART = { HOUSES, DECOR, lightsOf };
 })();

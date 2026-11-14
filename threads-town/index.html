@@ -21,12 +21,13 @@
   @keyframes leg{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}
   @keyframes bob{from{translate:0 0}to{translate:0 -2.5px}}
 
-  .bar{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));pointer-events:none}
+  .bar{position:fixed;left:0;right:0;top:0;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));pointer-events:none}
   .bar>*{pointer-events:auto}
   .brand{margin:0 auto 0 0;padding:8px 14px;border-radius:14px;background:var(--paper);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);line-height:1.2}
   .brand b{display:block;font-size:19px;font-weight:900;letter-spacing:-.03em}
   .brand span{font-size:12px;font-weight:700;opacity:.75}
   .chip{height:44px;padding:0 14px;border-radius:12px;background:var(--paper);border:2px solid var(--ink);box-shadow:4px 4px 0 var(--ink);font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;white-space:nowrap}
+  @media (max-width:480px){.chip{height:40px;padding:0 10px;font-size:13px}.brand{padding:6px 10px}.brand b{font-size:16px}.bar{gap:8px}}
   .chip:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
   .dock{position:fixed;left:0;right:0;bottom:0;display:grid;justify-items:center;gap:10px;padding:0 16px max(18px,env(safe-area-inset-bottom,0px));pointer-events:none}
   .dock>*{pointer-events:auto}
@@ -66,7 +67,8 @@
 
 <header class="bar">
   <p class="brand"><b>스친 마을</b><span id="count"></span></p>
-  <button class="chip" id="map" aria-pressed="false">마을 전체 보기</button>
+  <button class="chip" id="map" aria-pressed="false">전체 보기</button>
+  <button class="chip" id="night" aria-pressed="false">밤 보기</button>
   <button class="chip" id="rename" aria-label="닉네임과 옷 색 바꾸기">내 손님</button>
 </header>
 
