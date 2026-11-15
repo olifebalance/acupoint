@@ -11,26 +11,32 @@
   /* ───── 마을 지도 ─────
      집은 모두 아래(남쪽)를 보고 선다. 집 앞 40 아래에 길이 지나간다.
      자리가 모자라면 SLOTS에 줄을 더하고 ROADS를 늘리면 마을이 바깥으로 커진다. */
-  const W = 2300, H = 1400, ROAD = 40;
-  const SLOTS = {
-    A1: [330, 430], A2: [600, 430], A4: [1140, 430], A5: [1410, 430],
-    B1: [300, 800], B2: [540, 800], center: [870, 800], B3: [1200, 800], B4: [1440, 800],
-    C1: [330, 1170], C2: [560, 1170], C3: [870, 1170], C4: [1180, 1170], C5: [1410, 1170],
-    temple: [2000, 770],
-  };
-  const SLOT_NAME = { center: '한가운데', temple: '동쪽 쉼터', A1: '윗길 1호', A2: '윗길 2호', A4: '윗길 3호', A5: '윗길 4호', B1: '가운뎃길 1호', B2: '가운뎃길 2호', B3: '가운뎃길 3호', B4: '가운뎃길 4호', C1: '아랫길 1호', C2: '아랫길 2호', C3: '아랫길 3호', C4: '아랫길 4호', C5: '아랫길 5호' };
-  // 길: [x1, y1, x2, y2] (가로 또는 세로 직선)
-  const ROADS = [
-    [170, 470, 1600, 470], [170, 840, 2000, 840], [170, 1210, 1600, 1210],
-    [170, 470, 170, 1210], [1600, 470, 1600, 1210], [700, 470, 700, 1210], [1040, 470, 1040, 1210],
-  ];
+  const COLS = 9, ROWS = 7, GX = 300, GY = 430, DX = 250, DY = 370, ROAD = 40;
+  const W = 3150, H = 2850;
+  const cx = (i) => GX + i * DX, cy = (j) => GY + j * DY;
+  const MC = 4, MR = 3;                       // 미모 집: 가운데 칸
+  const MIMO = [cx(MC), cy(MR)], PLAZA = [cx(MC), cy(MR - 1)], TEMPLE = [2800, 1510];
+  const L_X = 170, R_X = 2430, V1 = 925, V2 = 1675;   // 세로 길
+  // 길: [x1, y1, x2, y2] (가로 또는 세로 직선). 가운뎃줄 길은 동쪽 쉼터까지 이어진다.
+  const ROADS = [];
+  for (let j = 0; j < ROWS; j++) ROADS.push([L_X, cy(j) + ROAD, j === MR ? TEMPLE[0] : R_X, cy(j) + ROAD]);
+  [L_X, V1, V2, R_X].forEach((x) => ROADS.push([x, cy(0) + ROAD, x, cy(ROWS - 1) + ROAD]));
 
-  const lots = Object.keys(SLOTS).map((slot) => {
-    const [x, y] = SLOTS[slot];
-    const r = RESIDENTS.find((q) => q.slot === slot) || null;
-    const roadY = slot === 'temple' ? 840 : y + ROAD;
-    return { slot, x, y, r, door: [x, roadY], w: slot === 'center' ? 300 : slot === 'temple' ? 300 : 200 };
-  });
+  // 자리: 미모 집에서 가까운 칸부터 목록 순서대로 채운다 (같은 줄을 조금 더 가깝게 친다)
+  const cells = [];
+  for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
+    if ((i === MC && j === MR) || (i === MC && j === MR - 1)) continue;
+    cells.push({ slot: `r${j + 1}c${i + 1}`, x: cx(i), y: cy(j), name: `${j + 1}번길 ${i + 1}호`, d: Math.hypot(cx(i) - MIMO[0], (cy(j) - MIMO[1]) * 1.2) });
+  }
+  cells.sort((a, b) => a.d - b.d);
+  const SLOT_NAME = { center: '한가운데', temple: '동쪽 쉼터' };
+  const special = (house) => RESIDENTS.find((q) => q.house === house) || null;
+  const others = RESIDENTS.filter((q) => q.house !== 'mimo' && q.house !== 'temple');
+  const lots = [
+    { slot: 'center', x: MIMO[0], y: MIMO[1], r: special('mimo'), door: [MIMO[0], MIMO[1] + ROAD], w: 280 },
+    { slot: 'temple', x: TEMPLE[0], y: TEMPLE[1], r: special('temple'), door: [TEMPLE[0], cy(MR) + ROAD], w: 300 },
+    ...cells.map((c, k) => { SLOT_NAME[c.slot] = c.name; return { slot: c.slot, x: c.x, y: c.y, r: others[k] || null, door: [c.x, c.y + ROAD], w: 200 }; }),
+  ];
 
   /* ───── 길 그래프: 교차점과 문 앞을 점으로, 길을 따라 이웃한 점끼리 잇는다 ───── */
   const nodes = [], edges = [];
@@ -82,40 +88,50 @@
   /* ───── 그리기 ───── */
   const svg = $('#town');
   const at = (x, y, inner, o = '') => `<g transform="translate(${x} ${y})" ${o}>${inner}</g>`;
+  let seed = 7;
+  const rnd = (a, b) => { seed = (seed * 16807) % 2147483647; return a + ((seed - 1) / 2147483646) * (b - a); };
   let ground = `<rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#dbe7c3"/>`;
   // 풀밭 얼룩
-  [[420, 250, 300, 90], [1250, 640, 260, 80], [520, 1010, 320, 90], [1500, 1330, 300, 70], [1900, 420, 260, 110], [2080, 1080, 240, 120], [80, 760, 120, 260]].forEach(([x, y, rx, ry]) => { ground += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#cfdfb2"/>`; });
+  for (let k = 0; k < 16; k++) ground += `<ellipse cx="${rnd(0, W).toFixed(0)}" cy="${rnd(120, H).toFixed(0)}" rx="${rnd(180, 320).toFixed(0)}" ry="${rnd(70, 120).toFixed(0)}" fill="#cfdfb2"/>`;
   // 쉼터 마당
-  ground += `<ellipse cx="2000" cy="800" rx="300" ry="250" fill="#e9e2cc"/><ellipse cx="2000" cy="800" rx="284" ry="236" fill="none" stroke="#cdbf9c" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/>`;
+  ground += `<ellipse cx="${TEMPLE[0]}" cy="${TEMPLE[1] + 30}" rx="300" ry="250" fill="#e9e2cc"/><ellipse cx="${TEMPLE[0]}" cy="${TEMPLE[1] + 30}" rx="284" ry="236" fill="none" stroke="#cdbf9c" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/>`;
   // 길: 어두운 테두리를 먼저, 밝은 길을 위에
-  const roadPath = ROADS.map(([x1, y1, x2, y2]) => `M${x1} ${y1} L${x2} ${y2}`).join(' ') + lots.map((l) => ` M${l.x} ${l.y - 4} L${l.door[0]} ${l.door[1]}`).join('');
+  const roadLines = ROADS.map(([x1, y1, x2, y2]) => `M${x1} ${y1} L${x2} ${y2}`).join(' ');
+  const roadPath = roadLines + lots.map((l) => ` M${l.x} ${l.y - 4} L${l.door[0]} ${l.door[1]}`).join('');
   ground += `<path d="${roadPath}" fill="none" stroke="#cbbd9a" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/><path d="${roadPath}" fill="none" stroke="#f4ecd8" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>`;
-  ground += `<path d="${ROADS.map(([x1, y1, x2, y2]) => `M${x1} ${y1} L${x2} ${y2}`).join(' ')}" fill="none" stroke="#e2d6b8" stroke-width="3" stroke-dasharray="14 18" stroke-linecap="round"/>`;
-  ground += at(1770, 930, DECOR.pond()) + at(870, 300, DECOR.fountain());
+  ground += `<path d="${roadLines}" fill="none" stroke="#e2d6b8" stroke-width="3" stroke-dasharray="14 18" stroke-linecap="round"/>`;
+  ground += at(TEMPLE[0] - 230, TEMPLE[1] + 160, DECOR.pond()) + at(PLAZA[0], PLAZA[1] - 130, DECOR.fountain());
 
   // 세워 놓는 것들: 집과 꾸밈. y(발 위치)가 클수록 앞에 그린다.
-  const things = [];
-  let lights = '';
+  const things = [], lightItems = [];
+  const light = (x, y, kind) => { const h = lightsOf(kind); if (h) lightItems.push({ x, y, html: at(x, y, h) }); };
   lots.forEach((l) => {
-    const kind = l.r ? l.r.house : 'vacant';
-    const label = l.r ? `${l.r.name} 방문하기` : `빈 터 ${SLOT_NAME[l.slot]} 입점 안내 보기`;
-    lights += at(l.x, l.y, lightsOf(kind));
-    things.push({ y: l.y, html: at(l.x, l.y, HOUSES[kind]() + `<rect x="${-l.w / 2 - 10}" y="-200" width="${l.w + 20}" height="216" fill="transparent"/>`, `class="lot" data-slot="${l.slot}" tabindex="0" role="button" aria-label="${label}"`) });
+    const kind = l.r ? (l.r.house || 'kit') : 'vacant';
+    const label = l.r ? `${l.r.name} 방문하기` : `빈 터 ${SLOT_NAME[l.slot]} 보기`;
+    light(l.x, l.y, kind);
+    things.push({ x: l.x, y: l.y, html: at(l.x, l.y, HOUSES[kind](l.r) + `<rect x="${-l.w / 2 - 10}" y="-200" width="${l.w + 20}" height="216" fill="transparent"/>`, `class="lot" data-slot="${l.slot}" tabindex="0" role="button" aria-label="${label.replace(/"/g, '')}"`) });
   });
-  const put = (x, y, html) => things.push({ y, html: at(x, y, html) });
-  put(870, 398, DECOR.welcome());
-  [[130, 390, 1.1], [1700, 380, 1.2], [110, 1010, 1], [1690, 1090, 1.1], [1000, 250, 0.9], [740, 250, 0.9], [220, 1330, 1.1], [1010, 1350, 1]].forEach(([x, y, s], i) => put(x, y, DECOR.tree(s, i % 2 ? '#8fbb6a' : '#7fae5e')));
-  [[250, 520], [1500, 520], [640, 900], [1110, 900], [1300, 1270], [480, 1270], [90, 620], [1680, 700]].forEach(([x, y], i) => put(x, y, i % 3 === 0 ? DECOR.flowers(['#ff9aa2', '#ffd166', '#b8a5e3'][i % 3]) : DECOR.bush(i % 2 ? '#9cc57a' : '#8fbb6a')));
-  [[760, 520], [980, 520], [760, 900], [980, 900], [452, 1262], [1480, 890]].forEach(([x, y]) => { put(x, y, DECOR.lamp()); lights += at(x, y, lightsOf('lamp')); });
+  const put = (x, y, html) => things.push({ x, y, html: at(x, y, html) });
+  put(PLAZA[0], PLAZA[1] - 32, DECOR.welcome());
+  // 마을 둘레의 나무와 꽃
+  for (let x = 120; x < R_X + 120; x += 190) { put(x + rnd(-40, 40), 300 + rnd(-50, 20), DECOR.tree(rnd(0.9, 1.25), x % 380 < 190 ? '#8fbb6a' : '#7fae5e')); put(x + rnd(-40, 40), H - 60 + rnd(-30, 20), DECOR.tree(rnd(0.9, 1.2), '#7fae5e')); }
+  for (let y = 520; y < H - 200; y += 230) { put(70 + rnd(-20, 20), y + rnd(-40, 40), DECOR.tree(rnd(0.9, 1.2), '#8fbb6a')); if (Math.abs(y - (cy(MR) + ROAD)) > 260) put(R_X + 100 + rnd(-20, 30), y + rnd(-40, 40), DECOR.tree(rnd(0.9, 1.2), '#7fae5e')); }
+  for (let k = 0; k < 14; k++) put(rnd(100, R_X + 60), [300, H - 110][k % 2] + rnd(20, 70), k % 2 ? DECOR.bush(k % 4 === 1 ? '#9cc57a' : '#8fbb6a') : DECOR.flowers(['#ff9aa2', '#ffd166', '#b8a5e3'][k % 3]));
+  // 가로등: 세로 길과 가로 길이 만나는 모퉁이마다
+  for (let j = 0; j < ROWS; j++) [V1 + 58, V2 + 58].forEach((x) => { const y = cy(j) + ROAD + 52; put(x, y, DECOR.lamp()); light(x, y, 'lamp'); });
   // 쉼터: 소나무, 석등, 탑, 긴 의자
-  [[1800, 660, 1.2], [2190, 700, 1.3], [2150, 980, 1.1], [1850, 560, 1]].forEach(([x, y, s]) => put(x, y, DECOR.pine(s)));
-  [[1890, 800], [2110, 800]].forEach(([x, y]) => { put(x, y, DECOR.stoneLamp()); lights += at(x, y, lightsOf('stoneLamp')); }); put(2090, 950, DECOR.pagoda()); put(1900, 1000, DECOR.bench()); put(2010, 1010, DECOR.bench());
+  [[-200, -110, 1.2], [190, -70, 1.3], [150, 210, 1.1], [-150, -210, 1]].forEach(([dx, dy, s]) => put(TEMPLE[0] + dx, TEMPLE[1] + dy, DECOR.pine(s)));
+  [[-110, 30], [110, 30]].forEach(([dx, dy]) => { put(TEMPLE[0] + dx, TEMPLE[1] + dy, DECOR.stoneLamp()); light(TEMPLE[0] + dx, TEMPLE[1] + dy, 'stoneLamp'); });
+  put(TEMPLE[0] + 90, TEMPLE[1] + 180, DECOR.pagoda()); put(TEMPLE[0] - 100, TEMPLE[1] + 230, DECOR.bench()); put(TEMPLE[0] + 10, TEMPLE[1] + 240, DECOR.bench());
   things.sort((a, b) => a.y - b.y);
+  const lights = lightItems.map((l) => l.html).join('');
 
   svg.innerHTML = `<defs><linearGradient id="t-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57e3d0"/><stop offset=".5" stop-color="#8b7cf6"/><stop offset="1" stop-color="#ff7ab8"/></linearGradient><radialGradient id="t-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>`
     + `<g id="ground">${ground}</g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
     + `<rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
   const thingsG = $('#things'), thingEls = [...thingsG.children];
+  const lightEls = [...$('#lights').children];
+  const shown = new Map(); // 화면 밖의 집과 불빛은 그리지 않는다
   const marker = $('#marker');
 
   /* ───── 손님 캐릭터 ───── */
@@ -130,7 +146,7 @@
       + `<g transform="translate(0 -74)"><rect x="${-(name.length * 7 + 12)}" y="-11" width="${name.length * 14 + 24}" height="22" rx="11" fill="#fff" stroke="#3d4650" stroke-width="2"/><text x="0" y="0.5" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="#3d4650">${name.replace(/[<&>]/g, '')}</text></g>`;
   };
   thingsG.appendChild(me);
-  const pos = { x: 870, y: 842 };
+  const pos = { x: MIMO[0], y: MIMO[1] + ROAD + 2 };
   let path = [], goal = null, walking = false, faceLeft = false, step = 0;
   const placeMe = () => {
     me.setAttribute('transform', `translate(${pos.x.toFixed(1)} ${pos.y.toFixed(1)})`);
@@ -140,7 +156,7 @@
   };
 
   /* ───── 화면(카메라) ───── */
-  const cam = { x: 870, y: 752, w: 1000, overview: false };
+  const cam = { x: MIMO[0], y: MIMO[1] - 48, w: 1000, overview: false };
   const viewW = () => (cam.overview ? Math.max(W + 120, (H + 160) * (innerWidth / innerHeight)) : clamp(innerWidth * 0.82, 680, 1250));
   function frame(now) {
     const vw = viewW(), vh = vw * (innerHeight / innerWidth);
@@ -149,6 +165,12 @@
     cam.x += (tx - cam.x) * k; cam.y += (ty - cam.y) * k; cam.w += (vw - cam.w) * k;
     const h = cam.w * (innerHeight / innerWidth);
     svg.setAttribute('viewBox', `${(cam.x - cam.w / 2).toFixed(1)} ${(cam.y - h / 2).toFixed(1)} ${cam.w.toFixed(1)} ${h.toFixed(1)}`);
+    const cull = (el, x, y) => {
+      const on = Math.abs(x - cam.x) < cam.w / 2 + 280 && y > cam.y - h / 2 - 60 && y < cam.y + h / 2 + 300;
+      if (shown.get(el) !== on) { shown.set(el, on); el.style.display = on ? '' : 'none'; }
+    };
+    things.forEach((t, i) => cull(thingEls[i], t.x, t.y));
+    lightItems.forEach((l, i) => cull(lightEls[i], l.x, l.y));
   }
 
   /* ───── 걷기 ───── */
@@ -265,7 +287,7 @@
     } else {
       $('#c-name').textContent = '빈 터';
       $('#c-handle').textContent = '';
-      $('#c-intro').textContent = '이 자리는 아직 비어 있어요.\n입점은 미모에게 물어보세요.';
+      $('#c-intro').textContent = '아직 준비 중인 자리예요.';
       go.hidden = true;
       dialog.style.setProperty('--c', '#ff7a59');
     }
