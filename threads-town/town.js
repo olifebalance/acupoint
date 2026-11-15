@@ -354,8 +354,8 @@
   const puffHTML = (k) => `<g class="puff" pointer-events="none" transform="scale(${k})">` + [[0, 0], [-20, 0.22], [19, 0.44]].map(([dx, d]) => `<g transform="translate(${dx} -100)"><path class="h" d="${HEART}" fill="#ff5c8a" stroke="#fff" stroke-width="2.5" paint-order="stroke" style="animation-delay:${d}s"/></g>`).join('') + '</g>';
   const waveEl = (el) => {
     el.classList.remove('waving'); el.querySelectorAll('.puff').forEach((n) => n.remove()); void el.getBBox();
-    el.classList.add('waving'); const svg = el.ownerSVGElement, k = Math.min(3, Math.max(1, svg.viewBox.baseVal.width / svg.clientWidth * 0.75));
-    el.insertAdjacentHTML('beforeend', puffHTML(k.toFixed(2))); // 멀리서 볼 때(전체 보기)는 하트를 키운다
+    el.classList.add('waving'); const svg = el.ownerSVGElement, k = Math.min(4, Math.max(1, svg.viewBox.baseVal.width / (svg.clientWidth || innerWidth) * 1.25));
+    el.insertAdjacentHTML('beforeend', puffHTML(k.toFixed(2))); // 휴대폰이나 전체 보기처럼 화면이 작게 보일 때는 하트를 키운다
     clearTimeout(el._wave); el._wave = setTimeout(() => { el.classList.remove('waving'); el.querySelectorAll('.puff').forEach((n) => n.remove()); }, 2100);
   };
   $('#wave').addEventListener('click', () => { waveAt = Date.now(); waveEl(me); tellSoon = true; hint.done(); });

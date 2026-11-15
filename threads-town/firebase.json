@@ -1,7 +1,34 @@
 {
   "hosting": {
     "public": ".",
-    "ignore": ["firebase.json", "database.rules.json", "seed.json", "houses.json", "README.md", "**/.*"]
+    "ignore": [
+      "firebase.json",
+      "database.rules.json",
+      "seed.json",
+      "houses.json",
+      "README.md",
+      "**/.*"
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(html|js)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
+    ]
   },
   "database": {
     "rules": "database.rules.json"
