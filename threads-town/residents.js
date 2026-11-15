@@ -135,4 +135,6 @@ window.RESIDENTS = [
     intro: '취미가 가족인 아빠\n서로를 연결하는 사람부자 "마을이장"' },
   { name: '슈쌤', handle: 'sshoosam', color: '#f29ac0', color2: '#b8a5e3', roof: 'hip', props: ['brush', 'heart', 'flower'],
     intro: '뷰티 아티스트 슈쌤\n뷰티꿀팁도 덤' },
+  { name: '아트맨', handle: 'artman_kind', color: '#f07a2b', color2: '#2f3a5a', roof: 'gable', props: ['house', 'brush', 'coffee'],
+    intro: '집보다 먼저, 사는 사람을 봅니다\n광고디자이너 출신 · 인테리어 현장 17년\n할 수 있는건 무조건 다하는게 원칙\n가족과 사람의 기록 \u2018아빠는 아트맨\u2019' },
 ];
