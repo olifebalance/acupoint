@@ -40,3 +40,29 @@ cd threads-town && python3 -m http.server 8773   # http://localhost:8773
 ## 공개 전에
 
 주민은 실제 스친의 스레드 프로필(이름·아이디·소개 글)을 바탕으로 했다. 소개는 줄여 쓴 것이라 본인 확인이 필요하고, 공개 전에 한 사람씩 동의를 받아야 한다. 프로필 사진은 쓰지 않았다.
+
+## 함께 기능 (서로 보이기 · 손 흔들기 · 하트)
+
+Firebase 무료(Spark) 요금제에 올렸을 때만 켜진다. 다른 곳에서는 자동으로 꺼지고 혼자 다니는 마을로 동작한다.
+
+- `net.js` 서버 연결. `database.rules.json` 장난을 막는 규칙. `seed.json` 하트를 받을 수 있는 집 목록.
+- 하트: 한 사람이 한 집에 20시간에 한 번. 10개에 꽃밭, 30개에 깃발, 100개에 반짝이는 별.
+- 출석 일수와 닉네임·모습은 그 기기에만 저장된다.
+- 주소 끝에 `?mock`을 붙이면 서버 없이 같은 브라우저의 창끼리 이어져서 시험할 수 있다.
+
+### 올리는 순서 (처음 한 번)
+
+1. Firebase 콘솔에서 프로젝트를 만들고, Realtime Database(잠금 모드)와 Authentication의 "익명" 로그인을 켠다. 웹 앱을 추가하면서 호스팅을 체크한다.
+2. 이 폴더에서:
+
+```sh
+npm install -g firebase-tools
+firebase login
+firebase use --add            # 만든 프로젝트를 고른다
+firebase database:set /houses houses.json  # 하트를 받을 수 있는 집 목록 넣기
+firebase deploy               # 사이트와 규칙을 같이 올린다
+```
+
+`houses.json`은 집 열쇠 목록이고, `seed.json`은 같은 내용을 `{"houses": {...}}`로 감싼 것이다(콘솔의 "JSON 가져오기"용).
+
+주민을 더하면 `residents.js`를 고치고, `/houses`에 그 사람 열쇠(아이디의 `.`을 `,`로 바꾼 것)를 `true`로 넣은 뒤 `firebase deploy`를 다시 한다.

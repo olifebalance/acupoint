@@ -270,5 +270,14 @@
     return E(x + w / 2, y + h / 2, Math.max(w, 40) * 1.15, Math.max(h, 40) * 1.15, 'url(#t-glow)') + R(x, y, w, h, f, rx);
   }).join('');
 
-  window.TOWN_ART = { HOUSES, DECOR, lightsOf };
+  /** 하트가 쌓인 집의 꾸밈. 1단계 꽃밭, 2단계 깃발, 3단계 반짝이는 별. */
+  const perks = (tier, w) => {
+    let s = '';
+    if (tier >= 1) s += [-w / 2 + 14, -w / 2 + 34, w / 2 - 34, w / 2 - 14].map((x, i) => flower(x, 2, ['#ff6f91', '#ffd24a', '#b8a5e3', '#ff9aa2'][i], 6)).join('');
+    if (tier >= 2) s += L(`M${-w / 2 + 6} -108 v-62`, '#8a6a48', 4) + P(`M${-w / 2 + 8} -170 h40 l-9 11 l9 11 h-40Z`, '#ff6f91') + P(`M${-w / 2 + 22} -154 c-7 -5 -4 -10 0 -6 c4 -4 7 1 0 6Z`, '#fff');
+    if (tier >= 3) s += C(w / 2 - 14, -172, 26, 'url(#t-glow)') + P(`M${w / 2 - 14} -190 l5 11 l12 1.5 l-9 8 l2.6 12 l-10.6 -6 l-10.6 6 l2.6 -12 l-9 -8 l12 -1.5Z`, '#ffd24a') + L(`M${w / 2 + 14} -196 v8 M${w / 2 + 10} -192 h8 M${w / 2 - 44} -186 v6 M${w / 2 - 47} -183 h6`, '#ffd24a', 2.5);
+    return s;
+  };
+
+  window.TOWN_ART = { HOUSES, DECOR, lightsOf, perks };
 })();

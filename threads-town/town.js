@@ -138,22 +138,28 @@
   const NS = 'http://www.w3.org/2000/svg';
   const me = document.createElementNS(NS, 'g');
   me.setAttribute('id', 'me');
-  const drawMe = (color, name) => {
-    me.innerHTML = `<ellipse cx="0" cy="2" rx="15" ry="5" fill="rgba(60,50,30,.22)"/>`
-      + `<g class="legs"><rect class="leg l" x="-9" y="-13" width="7" height="14" rx="3" fill="#3d4650"/><rect class="leg r" x="2" y="-13" width="7" height="14" rx="3" fill="#3d4650"/></g>`
-      + `<g class="body"><rect x="-13" y="-38" width="26" height="28" rx="10" fill="${color}"/><circle cx="0" cy="-48" r="13" fill="#ffe0bd"/><path d="M-13 -50 a13 13 0 0 1 26 0 q-13 -8 -26 0Z" fill="#4a3728"/>`
-      + `<circle cx="-4.5" cy="-47" r="1.7" fill="#3d4650"/><circle cx="4.5" cy="-47" r="1.7" fill="#3d4650"/></g>`
-      + `<g transform="translate(0 -74)"><rect x="${-(name.length * 7 + 12)}" y="-11" width="${name.length * 14 + 24}" height="22" rx="11" fill="#fff" stroke="#3d4650" stroke-width="2"/><text x="0" y="0.5" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="#3d4650">${name.replace(/[<&>]/g, '')}</text></g>`;
+  const esc = (t) => String(t).replace(/[<&>"]/g, '');
+  const HAIR = {
+    m: 'M-13 -50 a13 13 0 0 1 26 0 q-13 -8 -26 0Z',
+    f: 'M-14 -34 q-3 -30 14 -29 q17 -1 14 29 q-3 -4 -4 -14 q-10 -9 -20 0 q-1 10 -4 14Z',
+  };
+  /** 손님 한 명의 그림. 나와 다른 손님이 같이 쓴다. */
+  const charHTML = (color, name, look, mine) => `<ellipse cx="0" cy="2" rx="15" ry="5" fill="rgba(60,50,30,.22)"/>`
+    + `<g class="legs"><rect class="leg l" x="-9" y="-13" width="7" height="14" rx="3" fill="#3d4650"/><rect class="leg r" x="2" y="-13" width="7" height="14" rx="3" fill="#3d4650"/></g>`
+    + `<g class="body"><rect class="arm" x="9" y="-37" width="7" height="17" rx="3.5" fill="${esc(color)}"/><rect x="-13" y="-38" width="26" height="28" rx="10" fill="${esc(color)}"/><circle cx="0" cy="-48" r="13" fill="#ffe0bd"/><path d="${HAIR[look] || HAIR.m}" fill="#4a3728"/>`
+    + `<circle cx="-4.5" cy="-47" r="1.7" fill="#3d4650"/><circle cx="4.5" cy="-47" r="1.7" fill="#3d4650"/></g>`
+    + `<g transform="translate(0 -74)"><rect x="${-(name.length * 7 + 12)}" y="-11" width="${name.length * 14 + 24}" height="22" rx="11" fill="${mine ? '#fff' : '#fffbe6'}" stroke="#3d4650" stroke-width="2"/><text x="0" y="0.5" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="#3d4650">${esc(name)}</text></g>`;
+  const drawMe = (color, name, look) => { me.innerHTML = charHTML(color, name, look, true); };
+  const placeChar = (el, x, y) => {
+    el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+    // 발 위치가 더 아래인 것 앞에 끼워 넣어, 집 뒤로 가면 가려지게 한다
+    const before = thingEls[things.findIndex((t) => t.y > y)] || null;
+    if (el.nextSibling !== before) thingsG.insertBefore(el, before);
   };
   thingsG.appendChild(me);
   const pos = { x: MIMO[0], y: MIMO[1] + ROAD + 2 };
   let path = [], goal = null, walking = false, faceLeft = false, step = 0;
-  const placeMe = () => {
-    me.setAttribute('transform', `translate(${pos.x.toFixed(1)} ${pos.y.toFixed(1)})`);
-    // 발 위치가 더 아래인 것 앞에 끼워 넣어, 집 뒤로 가면 가려지게 한다
-    const before = thingEls[things.findIndex((t) => t.y > pos.y)] || null;
-    if (me.nextSibling !== before) thingsG.insertBefore(me, before);
-  };
+  const placeMe = () => placeChar(me, pos.x, pos.y);
 
   /* ───── 화면(카메라) ───── */
   const cam = { x: MIMO[0], y: MIMO[1] - 48, w: 1000, overview: false };
@@ -229,6 +235,16 @@
       darkEl.setAttribute('opacity', (night * 0.66).toFixed(3));
       lightsEl.setAttribute('opacity', clamp((night - 0.3) / 0.5, 0, 1).toFixed(3));
     }
+    // 다른 손님들: 받은 위치로 부드럽게 따라간다
+    peers.forEach((q) => {
+      const d = Math.hypot(q.tx - q.x, q.ty - q.y);
+      if (d > 600) { q.x = q.tx; q.y = q.ty; } else if (d > 0.5) { const k = Math.min(1, dt * 7); q.x += (q.tx - q.x) * k; q.y += (q.ty - q.y) * k; }
+      const moving = d > 3;
+      if (moving !== q.moving) { q.moving = moving; q.el.classList.toggle('walking', moving && !RM); }
+      placeChar(q.el, q.x, q.y);
+    });
+    // 내 위치 알리기: 움직이는 동안 0.25초마다, 멈추면 한 번 더
+    if (net && (moved || tellSoon) && now - told > 250) { told = now; tellSoon = moved; tell(); }
     frame(now);
     requestAnimationFrame(tick);
   }
@@ -269,7 +285,6 @@
   function setOverview(on) { cam.overview = on; mapBtn.textContent = on ? '내 자리로' : '전체 보기'; mapBtn.setAttribute('aria-pressed', on); }
   mapBtn.addEventListener('click', () => setOverview(!cam.overview));
   const filled = lots.filter((l) => l.r).length;
-  $('#count').textContent = `입점 ${filled}곳 · 빈 터 ${lots.length - filled}곳`;
 
   /* ───── 소개 카드 ───── */
   const dialog = $('#card');
@@ -284,12 +299,14 @@
       go.textContent = l.r.linkLabel || '스레드 보러 가기';
       go.hidden = false;
       dialog.style.setProperty('--c', l.r.color);
+      cardLot = l; showHearts();
     } else {
       $('#c-name').textContent = '빈 터';
       $('#c-handle').textContent = '';
       $('#c-intro').textContent = '아직 준비 중인 자리예요.';
       go.hidden = true;
       dialog.style.setProperty('--c', '#ff7a59');
+      cardLot = null; showHearts();
     }
     keys.clear();
     dialog.showModal();
@@ -303,19 +320,99 @@
   let color = store.get('town-color') || COLORS[0];
   swatches.innerHTML = COLORS.map((c) => `<label><input type="radio" name="color" value="${c}" ${c === color ? 'checked' : ''}><span style="background:${c}"></span><b class="sr">옷 색 ${c}</b></label>`).join('');
   nameIn.value = store.get('town-name') || '';
-  const enter = (name) => { drawMe(color, name); placeMe(); };
+  let look = store.get('town-look') || 'f';
+  document.querySelectorAll('#g-form input[name=look]').forEach((r) => { r.checked = r.value === look; });
+  let myName = store.get('town-name') || '손님';
+  const enter = (name) => { myName = name; drawMe(color, name, look); placeMe(); tellSoon = true; };
   $('#g-form').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = (nameIn.value.trim() || '손님').slice(0, 8);
-    color = new FormData(e.target).get('color') || color;
-    store.set('town-name', name); store.set('town-color', color);
+    const f = new FormData(e.target);
+    color = f.get('color') || color; look = f.get('look') || look;
+    store.set('town-name', name); store.set('town-color', color); store.set('town-look', look);
     enter(name);
     gate.close();
   });
   $('#rename').addEventListener('click', () => gate.showModal());
-  enter(store.get('town-name') || '손님');
-  if (!store.get('town-name') && !new URLSearchParams(location.search).has('skip')) gate.showModal();
 
-  window.__town = { pos, lots, walkTo, route, cam, setOverview, setNight, nodes };
+  /* ───── 출석: 이 기기에서 며칠째 들렀는지 (한국 시간 기준) ───── */
+  const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const yesterday = new Date(Date.now() + 9 * 3600e3 - 864e5).toISOString().slice(0, 10);
+  let days = { last: '', streak: 0, total: 0 };
+  try { days = Object.assign(days, JSON.parse(store.get('town-days') || '{}')); } catch (e) {}
+  if (days.last !== today) { days = { last: today, streak: days.last === yesterday ? days.streak + 1 : 1, total: days.total + 1 }; store.set('town-days', JSON.stringify(days)); }
+  $('#count').textContent = `입점 ${filled}곳 · 출석 ${days.streak}일째`;
+
+  /* ───── 손 흔들기 ───── */
+  let waveAt = 0;
+  const waveEl = (el) => { el.classList.remove('waving'); void el.getBBox(); el.classList.add('waving'); setTimeout(() => el.classList.remove('waving'), 1700); };
+  $('#wave').addEventListener('click', () => { waveAt = Date.now(); waveEl(me); tellSoon = true; hint.done(); });
+
+  /* ───── 함께: 다른 손님 보이기, 집마다 하트 (연결이 안 되면 혼자 다니는 마을 그대로) ───── */
+  let net = null, told = 0, tellSoon = false;
+  const peers = new Map();
+  const tell = () => net.setPresence({ n: myName, c: color, g: look, x: Math.round(pos.x), y: Math.round(pos.y), f: faceLeft, w: waveAt });
+  const onlineEl = $('#online');
+  const showOnline = () => { onlineEl.hidden = !net; if (net) onlineEl.textContent = `지금 ${peers.size + 1}명`; };
+  function onPeer(uid, d) {
+    let q = peers.get(uid);
+    if (!d || typeof d.x !== 'number' || typeof d.y !== 'number') { if (q) { q.el.remove(); peers.delete(uid); showOnline(); } return; }
+    if (!q) {
+      if (peers.size >= 60) return; // 너무 많으면 더 그리지 않는다
+      q = { el: document.createElementNS(NS, 'g'), x: d.x, y: d.y, tx: d.x, ty: d.y, w: d.w || 0, sig: '', moving: false };
+      q.el.setAttribute('class', 'peer');
+      q.el.setAttribute('pointer-events', 'none');
+      peers.set(uid, q); showOnline();
+    }
+    const name = String(d.n || '손님').slice(0, 8), col = /^#[0-9a-f]{6}$/i.test(d.c) ? d.c : '#8a8f96', lk = d.g === 'm' ? 'm' : 'f';
+    const sig = name + col + lk;
+    if (sig !== q.sig) { q.sig = sig; q.el.innerHTML = charHTML(col, name, lk, false); }
+    q.tx = clamp(d.x, 0, W); q.ty = clamp(d.y, 0, H);
+    q.el.querySelector('.body')?.setAttribute('transform', d.f ? 'scale(-1 1)' : '');
+    if (d.w && d.w !== q.w) { q.w = d.w; if (Date.now() - d.w < 8000) waveEl(q.el); }
+  }
+
+  const TIERS = [10, 30, 100];
+  const keyOf = (r) => r.handle.replace(/\./g, ',');
+  let hearts = {}, cardLot = null;
+  const perkEls = new Map();
+  function showPerks() {
+    lots.forEach((l) => {
+      if (!l.r) return;
+      const n = hearts[keyOf(l.r)] || 0, tier = TIERS.filter((t) => n >= t).length;
+      if ((perkEls.get(l.slot)?.tier || 0) === tier) return;
+      let p = perkEls.get(l.slot);
+      if (!p) { p = { g: document.createElementNS(NS, 'g'), tier: 0 }; p.g.setAttribute('pointer-events', 'none'); thingEls[things.findIndex((t) => t.x === l.x && t.y === l.y)].appendChild(p.g); perkEls.set(l.slot, p); }
+      p.tier = tier; p.g.innerHTML = window.TOWN_ART.perks(tier, l.w);
+    });
+  }
+  const heartBox = $('#c-hearts'), heartBtn = $('#c-heart'), heartNum = $('#c-heart-n');
+  function showHearts() {
+    heartBox.hidden = !(net && cardLot);
+    if (!net || !cardLot) return;
+    const key = keyOf(cardLot.r), n = hearts[key] || 0;
+    const wait = Date.now() - net.lastGiven(key) < window.TownNet.COOLDOWN;
+    heartNum.textContent = `하트 ${n}개`;
+    heartBtn.disabled = wait;
+    heartBtn.textContent = wait ? '오늘은 하트를 줬어요' : '하트 주기';
+  }
+  heartBtn.addEventListener('click', async () => {
+    if (!net || !cardLot) return;
+    heartBtn.disabled = true;
+    const res = await net.giveHeart(keyOf(cardLot.r));
+    if (res === 'error') { heartBtn.textContent = '지금은 하트를 줄 수 없어요'; return; }
+    showHearts();
+  });
+
+  enter(myName);
+  if (!store.get('town-name') && !new URLSearchParams(location.search).has('skip')) gate.showModal();
+  window.TownNet.connect().then((n) => {
+    if (!n) return;
+    net = n; tellSoon = true; showOnline();
+    net.onPeers(onPeer);
+    net.onHearts((h) => { hearts = h; showPerks(); showHearts(); });
+  });
+
+  window.__town = { pos, lots, walkTo, route, cam, setOverview, setNight, nodes, peers, get net() { return net; }, get hearts() { return hearts; } };
   requestAnimationFrame(tick);
 })();

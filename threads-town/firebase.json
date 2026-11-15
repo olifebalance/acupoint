@@ -1,0 +1,9 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": ["firebase.json", "database.rules.json", "seed.json", "houses.json", "README.md", "**/.*"]
+  },
+  "database": {
+    "rules": "database.rules.json"
+  }
+}

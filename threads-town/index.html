@@ -18,6 +18,12 @@
   #me.walking .leg.l{animation:leg .36s ease-in-out infinite alternate}
   #me.walking .leg.r{animation:leg .36s ease-in-out infinite alternate-reverse}
   #me.walking .body{animation:bob .18s ease-in-out infinite alternate}
+  #me .arm,.peer .arm{transform-box:fill-box;transform-origin:50% 12%}
+  .peer .leg{transform-box:fill-box;transform-origin:50% 0}
+  .peer.walking .leg.l{animation:leg .36s ease-in-out infinite alternate}
+  .peer.walking .leg.r{animation:leg .36s ease-in-out infinite alternate-reverse}
+  .waving .arm{animation:wave .42s ease-in-out 4 alternate}
+  @keyframes wave{from{transform:rotate(-150deg)}to{transform:rotate(-205deg)}}
   @keyframes leg{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}
   @keyframes bob{from{translate:0 0}to{translate:0 -2.5px}}
 
@@ -33,6 +39,20 @@
   .dock>*{pointer-events:auto}
   #visit{height:54px;padding:0 24px;border-radius:16px;background:var(--hot);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);font:inherit;font-size:17px;font-weight:900;color:#fff;cursor:pointer}
   #visit[hidden]{display:none}
+  .acts{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+  .chip.tag{display:inline-flex;align-items:center;cursor:default;background:#fff3c4}
+  .chip.tag[hidden]{display:none}
+  .hearts{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;padding:10px 12px 10px 16px;border-radius:14px;background:#fff0f3;border:2px solid var(--ink)}
+  .hearts[hidden]{display:none}
+  .hearts b{font-size:15px}
+  .hearts button{height:42px;padding:0 16px;border-radius:11px;border:2px solid var(--ink);background:#ff6f91;color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+  .hearts button:disabled{background:#e9e4dc;color:#7a7f86;cursor:default}
+  .looks{display:flex;gap:8px}
+  .looks label{cursor:pointer}
+  .looks input{position:absolute;opacity:0}
+  .looks span{display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:11px;border:2px solid var(--ink);font-size:15px;font-weight:800}
+  .looks input:checked+span{background:var(--ink);color:var(--paper)}
+  .looks input:focus-visible+span{outline:3px solid var(--hot);outline-offset:3px}
   #hint{margin:0;padding:8px 14px;border-radius:999px;background:rgba(255,253,246,.92);font-size:13px;font-weight:700;transition:opacity .8s}
   #hint.gone{opacity:0}
   #hint .pc{display:none}
@@ -67,13 +87,14 @@
 
 <header class="bar">
   <p class="brand"><b>스친 마을</b><span id="count"></span></p>
+  <span class="chip tag" id="online" hidden></span>
   <button class="chip" id="map" aria-pressed="false">전체 보기</button>
   <button class="chip" id="night" aria-pressed="false">밤 보기</button>
   <button class="chip" id="rename" aria-label="닉네임과 옷 색 바꾸기">내 손님</button>
 </header>
 
 <div class="dock">
-  <button id="visit" hidden></button>
+  <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button></div>
   <p id="hint">가고 싶은 집을 누르면 걸어가요<span class="pc"> · 방향키로도 움직여요</span></p>
 </div>
 
@@ -84,6 +105,7 @@
     <h2 id="c-name"></h2>
     <p class="handle" id="c-handle"></p>
     <p class="intro" id="c-intro"></p>
+    <div class="hearts" id="c-hearts" hidden><b id="c-heart-n"></b><button type="button" id="c-heart">하트 주기</button></div>
     <a class="go" id="c-go" target="_blank" rel="noopener noreferrer"></a>
   </div>
 </dialog>
@@ -94,16 +116,19 @@
     <h2 id="g-title">어떤 손님으로 들어갈까요?</h2>
     <label class="f" for="g-name">닉네임</label>
     <input type="text" id="g-name" maxlength="8" placeholder="손님" autocomplete="nickname">
+    <p class="f" style="margin:16px 0 8px;font-size:14px;font-weight:800">모습</p>
+    <div class="looks"><label><input type="radio" name="look" value="f" checked><span>여자</span></label><label><input type="radio" name="look" value="m"><span>남자</span></label></div>
     <p class="f" style="margin:16px 0 8px;font-size:14px;font-weight:800">옷 색</p>
     <div class="colors" id="g-colors"></div>
     <button class="go" type="submit">마을 들어가기</button>
-    <p class="fine">로그인은 없어요. 닉네임과 색은 이 기기에만 저장돼요.</p>
+    <p class="fine">로그인은 없어요. 닉네임과 모습, 출석은 이 기기에만 저장돼요.</p>
     <p class="fine">이 사이트는 Meta, Threads와 관련이 없습니다.</p>
   </form>
 </dialog>
 
 <script src="residents.js"></script>
 <script src="houses.js"></script>
+<script src="net.js"></script>
 <script src="town.js"></script>
 </body>
 </html>
