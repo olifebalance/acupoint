@@ -154,7 +154,11 @@
     el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
     // 발 위치가 더 아래인 것 앞에 끼워 넣어, 집 뒤로 가면 가려지게 한다
     const before = thingEls[things.findIndex((t) => t.y > y)] || null;
-    if (el.nextSibling !== before) thingsG.insertBefore(el, before);
+    // 같은 자리에 손님이 여럿 서 있으면 서로를 건너뛰고 비교한다.
+    // (매 프레임 다시 끼워 넣으면 손 흔들기 같은 움직임이 처음으로 되돌아가 멈춰 보인다)
+    let next = el.nextSibling;
+    while (next && next !== before && (next.id === 'me' || next.classList.contains('peer'))) next = next.nextSibling;
+    if (next !== before) thingsG.insertBefore(el, before);
   };
   thingsG.appendChild(me);
   const pos = { x: MIMO[0], y: MIMO[1] + ROAD + 2 };
@@ -345,7 +349,15 @@
 
   /* ───── 손 흔들기 ───── */
   let waveAt = 0;
-  const waveEl = (el) => { el.classList.remove('waving'); void el.getBBox(); el.classList.add('waving'); setTimeout(() => el.classList.remove('waving'), 1700); };
+  // 손을 흔들면 팔이 움직이고 머리 위로 하트 세 개가 떠오른다 (인사 표시일 뿐, 집 하트와는 별개)
+  const HEART = 'M0 9C-16 -2 -12 -14 -5 -14C-2 -14 0 -11 0 -9C0 -11 2 -14 5 -14C12 -14 16 -2 0 9Z';
+  const puffHTML = (k) => `<g class="puff" pointer-events="none" transform="scale(${k})">` + [[0, 0], [-20, 0.22], [19, 0.44]].map(([dx, d]) => `<g transform="translate(${dx} -100)"><path class="h" d="${HEART}" fill="#ff5c8a" stroke="#fff" stroke-width="2.5" paint-order="stroke" style="animation-delay:${d}s"/></g>`).join('') + '</g>';
+  const waveEl = (el) => {
+    el.classList.remove('waving'); el.querySelectorAll('.puff').forEach((n) => n.remove()); void el.getBBox();
+    el.classList.add('waving'); const svg = el.ownerSVGElement, k = Math.min(3, Math.max(1, svg.viewBox.baseVal.width / svg.clientWidth * 0.75));
+    el.insertAdjacentHTML('beforeend', puffHTML(k.toFixed(2))); // 멀리서 볼 때(전체 보기)는 하트를 키운다
+    clearTimeout(el._wave); el._wave = setTimeout(() => { el.classList.remove('waving'); el.querySelectorAll('.puff').forEach((n) => n.remove()); }, 2100);
+  };
   $('#wave').addEventListener('click', () => { waveAt = Date.now(); waveEl(me); tellSoon = true; hint.done(); });
 
   /* ───── 함께: 다른 손님 보이기, 집마다 하트 (연결이 안 되면 혼자 다니는 마을 그대로) ───── */

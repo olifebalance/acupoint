@@ -23,7 +23,9 @@
   .peer.walking .leg.l{animation:leg .36s ease-in-out infinite alternate}
   .peer.walking .leg.r{animation:leg .36s ease-in-out infinite alternate-reverse}
   .waving .arm{animation:wave .42s ease-in-out 4 alternate}
-  @keyframes wave{from{transform:rotate(-150deg)}to{transform:rotate(-205deg)}}
+  @keyframes wave{from{transform:rotate(-140deg) scale(1.2,1.45)}to{transform:rotate(-215deg) scale(1.2,1.45)}}
+  .puff .h{transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation:puff 1.5s ease-out both}
+  @keyframes puff{0%{opacity:0;transform:translateY(16px) scale(.3)}18%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1}100%{opacity:0;transform:translateY(-64px) scale(1.5)}}
   @keyframes leg{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}
   @keyframes bob{from{translate:0 0}to{translate:0 -2.5px}}
 
