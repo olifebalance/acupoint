@@ -17,6 +17,10 @@ window.RESIDENTS = [
     intro: '절 다니는 한의사 도원.\n절에서 배운 지혜로 몸과 마음을 돌보는 이야기를 전해요.' },
 
   // ── 먼저 입점한 10명: 손으로 그린 집
+  // 미모 카페: 쉼터 옆에서 잠깐 쉬어 가는 곳. 입점 수에 세지 않고 하트도 받지 않는다(noHeart).
+  { house: 'cafe', name: '미모 카페', handle: 'mimo1000', color: '#12233b', noHeart: true,
+    intro: '걷다가 잠깐 쉬어 가는 곳이에요.\n파라솔 아래에서 스친을 만나면 손을 흔들어 주세요.' },
+
   { house: 'harry', name: '해리 포토', handle: 'jeju_harry', color: '#3f7fd1',
     intro: '제주에 사는 AI 마법사 해리 포토.\n누구나 따라 할 수 있는 이미지·영상 프롬프트를 나눠요.' },
   { house: 'ohssam', name: '오쌤의라이프밸런스', handle: 'ohlifebalance', color: '#3f8f6b',

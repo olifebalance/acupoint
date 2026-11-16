@@ -11,16 +11,18 @@
   /* ───── 마을 지도 ─────
      집은 모두 아래(남쪽)를 보고 선다. 집 앞 40 아래에 길이 지나간다.
      자리가 모자라면 SLOTS에 줄을 더하고 ROADS를 늘리면 마을이 바깥으로 커진다. */
-  const COLS = 9, ROWS = 7, GX = 300, GY = 430, DX = 250, DY = 370, ROAD = 40;
-  const W = 3150, H = 2850;
+  const COLS = 9, ROWS = 10, GX = 300, GY = 430, DX = 250, DY = 370, ROAD = 40;
+  const W = 3520, H = 3960;
   const cx = (i) => GX + i * DX, cy = (j) => GY + j * DY;
   const MC = 4, MR = 3;                       // 미모 집: 가운데 칸
-  const MIMO = [cx(MC), cy(MR)], PLAZA = [cx(MC), cy(MR - 1)], TEMPLE = [2800, 1510];
+  const MIMO = [cx(MC), cy(MR)], PLAZA = [cx(MC), cy(MR - 1)], TEMPLE = [2800, 1510], CAFE = [3230, 1510];
   const L_X = 170, R_X = 2430, V1 = 925, V2 = 1675;   // 세로 길
   // 길: [x1, y1, x2, y2] (가로 또는 세로 직선). 가운뎃줄 길은 동쪽 쉼터까지 이어진다.
   const ROADS = [];
-  for (let j = 0; j < ROWS; j++) ROADS.push([L_X, cy(j) + ROAD, j === MR ? TEMPLE[0] : R_X, cy(j) + ROAD]);
+  for (let j = 0; j < ROWS; j++) ROADS.push([L_X, cy(j) + ROAD, j === MR ? CAFE[0] : R_X, cy(j) + ROAD]);
   [L_X, V1, V2, R_X].forEach((x) => ROADS.push([x, cy(0) + ROAD, x, cy(ROWS - 1) + ROAD]));
+  const TERRACE = [CAFE[0], cy(MR) + ROAD + 120];           // 카페 앞마당: 길에서 짧은 길이 이어진다
+  ROADS.push([CAFE[0], cy(MR) + ROAD, CAFE[0], cy(MR) + ROAD + 200]);
 
   // 자리: 미모 집에서 가까운 칸부터 목록 순서대로 채운다 (같은 줄을 조금 더 가깝게 친다)
   const cells = [];
@@ -29,12 +31,13 @@
     cells.push({ slot: `r${j + 1}c${i + 1}`, x: cx(i), y: cy(j), name: `${j + 1}번길 ${i + 1}호`, d: Math.hypot(cx(i) - MIMO[0], (cy(j) - MIMO[1]) * 1.2) });
   }
   cells.sort((a, b) => a.d - b.d);
-  const SLOT_NAME = { center: '한가운데', temple: '동쪽 쉼터' };
+  const SLOT_NAME = { center: '한가운데', temple: '동쪽 쉼터', cafe: '쉼터 옆 카페' };
   const special = (house) => RESIDENTS.find((q) => q.house === house) || null;
-  const others = RESIDENTS.filter((q) => q.house !== 'mimo' && q.house !== 'temple');
+  const others = RESIDENTS.filter((q) => q.house !== 'mimo' && q.house !== 'temple' && q.house !== 'cafe');
   const lots = [
     { slot: 'center', x: MIMO[0], y: MIMO[1], r: special('mimo'), door: [MIMO[0], MIMO[1] + ROAD], w: 280 },
     { slot: 'temple', x: TEMPLE[0], y: TEMPLE[1], r: special('temple'), door: [TEMPLE[0], cy(MR) + ROAD], w: 300 },
+    { slot: 'cafe', x: CAFE[0], y: CAFE[1], r: special('cafe'), door: [CAFE[0], cy(MR) + ROAD], w: 250 },
     ...cells.map((c, k) => { SLOT_NAME[c.slot] = c.name; return { slot: c.slot, x: c.x, y: c.y, r: others[k] || null, door: [c.x, c.y + ROAD], w: 200 }; }),
   ];
 
@@ -90,17 +93,23 @@
   const at = (x, y, inner, o = '') => `<g transform="translate(${x} ${y})" ${o}>${inner}</g>`;
   let seed = 7;
   const rnd = (a, b) => { seed = (seed * 16807) % 2147483647; return a + ((seed - 1) / 2147483646) * (b - a); };
-  let ground = `<rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#dbe7c3"/>`;
+  let ground = `<rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#e6dcb6"/>`;
   // 풀밭 얼룩
-  for (let k = 0; k < 16; k++) ground += `<ellipse cx="${rnd(0, W).toFixed(0)}" cy="${rnd(120, H).toFixed(0)}" rx="${rnd(180, 320).toFixed(0)}" ry="${rnd(70, 120).toFixed(0)}" fill="#cfdfb2"/>`;
+  for (let k = 0; k < 22; k++) ground += `<ellipse cx="${rnd(0, W).toFixed(0)}" cy="${rnd(120, H).toFixed(0)}" rx="${rnd(180, 320).toFixed(0)}" ry="${rnd(70, 120).toFixed(0)}" fill="#dbcf9f"/>`;
   // 쉼터 마당
   ground += `<ellipse cx="${TEMPLE[0]}" cy="${TEMPLE[1] + 30}" rx="300" ry="250" fill="#e9e2cc"/><ellipse cx="${TEMPLE[0]}" cy="${TEMPLE[1] + 30}" rx="284" ry="236" fill="none" stroke="#cdbf9c" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/>`;
+  // 카페 앞마당
+  ground += `<ellipse cx="${TERRACE[0]}" cy="${TERRACE[1]}" rx="215" ry="150" fill="#efe4cc"/><ellipse cx="${TERRACE[0]}" cy="${TERRACE[1]}" rx="200" ry="137" fill="none" stroke="#cdbf9c" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"/>`;
   // 길: 어두운 테두리를 먼저, 밝은 길을 위에
   const roadLines = ROADS.map(([x1, y1, x2, y2]) => `M${x1} ${y1} L${x2} ${y2}`).join(' ');
   const roadPath = roadLines + lots.map((l) => ` M${l.x} ${l.y - 4} L${l.door[0]} ${l.door[1]}`).join('');
   ground += `<path d="${roadPath}" fill="none" stroke="#cbbd9a" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/><path d="${roadPath}" fill="none" stroke="#f4ecd8" stroke-width="50" stroke-linecap="round" stroke-linejoin="round"/>`;
   ground += `<path d="${roadLines}" fill="none" stroke="#e2d6b8" stroke-width="3" stroke-dasharray="14 18" stroke-linecap="round"/>`;
   ground += at(TEMPLE[0] - 230, TEMPLE[1] + 160, DECOR.pond()) + at(PLAZA[0], PLAZA[1] - 130, DECOR.fountain());
+  // 늦가을: 바닥 여기저기에 떨어진 낙엽
+  const FALL = ['#e0843a', '#d9a13a', '#c9562f', '#e3b23c', '#b9742e'];
+  const fall = () => FALL[Math.floor(rnd(0, 4.999))];
+  for (let k = 0; k < 260; k++) { const x = rnd(40, W - 40).toFixed(0), y = rnd(140, H - 30).toFixed(0); ground += `<path transform="translate(${x} ${y}) rotate(${rnd(0, 360).toFixed(0)})" d="M-7 0 q7 -8 14 0 q-7 8 -14 0Z" fill="${fall()}" opacity=".85"/>`; }
 
   // 세워 놓는 것들: 집과 꾸밈. y(발 위치)가 클수록 앞에 그린다.
   const things = [], lightItems = [];
@@ -113,15 +122,20 @@
   });
   const put = (x, y, html) => things.push({ x, y, html: at(x, y, html) });
   put(PLAZA[0], PLAZA[1] - 32, DECOR.welcome());
-  // 마을 둘레의 나무와 꽃
-  for (let x = 120; x < R_X + 120; x += 190) { put(x + rnd(-40, 40), 300 + rnd(-50, 20), DECOR.tree(rnd(0.9, 1.25), x % 380 < 190 ? '#8fbb6a' : '#7fae5e')); put(x + rnd(-40, 40), H - 60 + rnd(-30, 20), DECOR.tree(rnd(0.9, 1.2), '#7fae5e')); }
-  for (let y = 520; y < H - 200; y += 230) { put(70 + rnd(-20, 20), y + rnd(-40, 40), DECOR.tree(rnd(0.9, 1.2), '#8fbb6a')); if (Math.abs(y - (cy(MR) + ROAD)) > 260) put(R_X + 100 + rnd(-20, 30), y + rnd(-40, 40), DECOR.tree(rnd(0.9, 1.2), '#7fae5e')); }
-  for (let k = 0; k < 14; k++) put(rnd(100, R_X + 60), [300, H - 110][k % 2] + rnd(20, 70), k % 2 ? DECOR.bush(k % 4 === 1 ? '#9cc57a' : '#8fbb6a') : DECOR.flowers(['#ff9aa2', '#ffd166', '#b8a5e3'][k % 3]));
+  // 마을 둘레의 나무: 단풍과 은행 빛깔, 발치에는 낙엽 더미
+  const fallTree = (x, y, s) => { put(x, y, DECOR.tree(s, fall())); if (rnd(0, 1) < 0.65) put(x + rnd(-28, 28), y + rnd(4, 14), DECOR.leaves(Math.floor(rnd(0, 9)))); };
+  for (let x = 120; x < R_X + 120; x += 190) { fallTree(x + rnd(-40, 40), 300 + rnd(-50, 20), rnd(0.9, 1.25)); fallTree(x + rnd(-40, 40), H - 60 + rnd(-30, 20), rnd(0.9, 1.2)); }
+  for (let y = 520; y < H - 200; y += 230) { fallTree(70 + rnd(-20, 20), y + rnd(-40, 40), rnd(0.9, 1.2)); if (Math.abs(y - (cy(MR) + ROAD)) > 260) fallTree(R_X + 100 + rnd(-20, 30), y + rnd(-40, 40), rnd(0.9, 1.2)); }
+  for (let k = 0; k < 14; k++) put(rnd(100, R_X + 60), [300, H - 110][k % 2] + rnd(20, 70), k % 2 ? DECOR.bush(k % 4 === 1 ? '#c9a24a' : '#b8863a') : DECOR.leaves(k));
   // 가로등: 세로 길과 가로 길이 만나는 모퉁이마다
   for (let j = 0; j < ROWS; j++) [V1 + 58, V2 + 58].forEach((x) => { const y = cy(j) + ROAD + 52; put(x, y, DECOR.lamp()); light(x, y, 'lamp'); });
   // 쉼터: 소나무, 석등, 탑, 긴 의자
   [[-200, -110, 1.2], [190, -70, 1.3], [150, 210, 1.1], [-150, -210, 1]].forEach(([dx, dy, s]) => put(TEMPLE[0] + dx, TEMPLE[1] + dy, DECOR.pine(s)));
   [[-110, 30], [110, 30]].forEach(([dx, dy]) => { put(TEMPLE[0] + dx, TEMPLE[1] + dy, DECOR.stoneLamp()); light(TEMPLE[0] + dx, TEMPLE[1] + dy, 'stoneLamp'); });
+  // 미모 카페 앞마당: 파라솔 탁자와 나무
+  [[-135, -32, '#E7FC66'], [135, -32, '#ff7a59'], [-112, 78, '#ff7a59'], [118, 82, '#E7FC66']].forEach(([dx, dy, c]) => { put(TERRACE[0] + dx, TERRACE[1] + dy, DECOR.table(c)); light(TERRACE[0] + dx, TERRACE[1] + dy, 'table'); });
+  put(TERRACE[0] + 52, TERRACE[1] - 62, DECOR.lamp()); light(TERRACE[0] + 52, TERRACE[1] - 62, 'lamp');
+  fallTree(CAFE[0] + 235, CAFE[1] - 40, 1.15); fallTree(CAFE[0] + 250, TERRACE[1] + 150, 1.05); fallTree(CAFE[0] - 190, TERRACE[1] + 200, 1.1);
   put(TEMPLE[0] + 90, TEMPLE[1] + 180, DECOR.pagoda()); put(TEMPLE[0] - 100, TEMPLE[1] + 230, DECOR.bench()); put(TEMPLE[0] + 10, TEMPLE[1] + 240, DECOR.bench());
   things.sort((a, b) => a.y - b.y);
   const lights = lightItems.map((l) => l.html).join('');
@@ -288,7 +302,7 @@
   const mapBtn = $('#map');
   function setOverview(on) { cam.overview = on; mapBtn.textContent = on ? '내 자리로' : '전체 보기'; mapBtn.setAttribute('aria-pressed', on); }
   mapBtn.addEventListener('click', () => setOverview(!cam.overview));
-  const filled = lots.filter((l) => l.r).length;
+  const filled = lots.filter((l) => l.r && !l.r.noHeart).length; // 카페 같은 쉼터는 세지 않는다
 
   /* ───── 소개 카드 ───── */
   const dialog = $('#card');
@@ -360,6 +374,10 @@
   };
   $('#wave').addEventListener('click', () => { waveAt = Date.now(); waveEl(me); tellSoon = true; hint.done(); });
 
+  /* ───── 늦가을: 화면 위에서 낙엽이 천천히 떨어진다 (움직임 줄이기 설정이면 넣지 않는다) ───── */
+  const leavesEl = $('#leaves');
+  if (leavesEl && !RM) leavesEl.innerHTML = Array.from({ length: innerWidth < 600 ? 9 : 16 }, (_, i) => `<i style="left:${(i * 61 + 7) % 100}%;--d:${10 + (i * 7) % 9}s;--w:-${(i * 13) % 17}s;--c:${FALL[i % 5]};--s:${13 + (i * 5) % 9}px"></i>`).join('');
+
   /* ───── 함께: 다른 손님 보이기, 집마다 하트 (연결이 안 되면 혼자 다니는 마을 그대로) ───── */
   let net = null, told = 0, tellSoon = false;
   const peers = new Map();
@@ -384,13 +402,13 @@
     if (d.w && d.w !== q.w) { q.w = d.w; if (Date.now() - d.w < 8000) waveEl(q.el); }
   }
 
-  const TIERS = [10, 30, 100];
+  const TIERS = [10, 30, 100, 200]; // 200: 맞춤 업그레이드 대상(금빛 리본)
   const keyOf = (r) => r.handle.replace(/\./g, ',');
   let hearts = {}, cardLot = null;
   const perkEls = new Map();
   function showPerks() {
     lots.forEach((l) => {
-      if (!l.r) return;
+      if (!l.r || l.r.noHeart) return;
       const n = hearts[keyOf(l.r)] || 0, tier = TIERS.filter((t) => n >= t).length;
       if ((perkEls.get(l.slot)?.tier || 0) === tier) return;
       let p = perkEls.get(l.slot);
@@ -400,8 +418,9 @@
   }
   const heartBox = $('#c-hearts'), heartBtn = $('#c-heart'), heartNum = $('#c-heart-n');
   function showHearts() {
-    heartBox.hidden = !(net && cardLot);
-    if (!net || !cardLot) return;
+    const on = !!(net && cardLot && !cardLot.r.noHeart); // 쉼터(카페)는 하트를 받지 않는다
+    heartBox.hidden = !on;
+    if (!on) return;
     const key = keyOf(cardLot.r), n = hearts[key] || 0;
     const wait = Date.now() - net.lastGiven(key) < window.TownNet.COOLDOWN;
     heartNum.textContent = `하트 ${n}개`;
