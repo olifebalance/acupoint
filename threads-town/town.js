@@ -414,6 +414,9 @@
       let p = perkEls.get(l.slot);
       if (!p) { p = { g: document.createElementNS(NS, 'g'), tier: 0 }; p.g.setAttribute('pointer-events', 'none'); thingEls[things.findIndex((t) => t.x === l.x && t.y === l.y)].appendChild(p.g); perkEls.set(l.slot, p); }
       p.tier = tier; p.g.innerHTML = window.TOWN_ART.perks(tier, l.w);
+      // 밤에는 전구와 별이 불빛으로 켜진다
+      if (!p.l) { p.l = document.createElementNS(NS, 'g'); p.l.setAttribute('transform', `translate(${l.x} ${l.y})`); lightsEl.appendChild(p.l); }
+      p.l.innerHTML = window.TOWN_ART.perkLights(tier, l.w);
     });
   }
   const heartBox = $('#c-hearts'), heartBtn = $('#c-heart'), heartNum = $('#c-heart-n');

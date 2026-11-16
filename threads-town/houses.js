@@ -334,5 +334,23 @@
     return s;
   };
 
-  window.TOWN_ART = { HOUSES, DECOR, lightsOf, perks };
+  /** 밤에 켜지는 하트 꾸밈의 불빛: 줄 전구, 큰 별과 별가루, 금빛 리본. (perks와 같은 자리에 그린다) */
+  const perkLights = (tier, w) => {
+    let s = '';
+    const h = w / 2;
+    const star = (cx, cy, r, f, o = '') => P(`M${cx} ${cy - r} l${r * 0.28} ${r * 0.62} l${r * 0.68} ${r * 0.08} l${-r * 0.5} ${r * 0.46} l${r * 0.14} ${r * 0.68} l${-r * 0.6} ${-r * 0.34} l${-r * 0.6} ${r * 0.34} l${r * 0.14} ${-r * 0.68} l${-r * 0.5} ${-r * 0.46} l${r * 0.68} ${-r * 0.08}Z`, f, o);
+    if (tier >= 2) {
+      const bulbs = ['#ffe27a', '#ff9ab3', '#a8e4f5', '#d3c6f5', '#b6f0be'];
+      for (let i = 0; i <= 8; i++) { const t = i / 8, x = -h - 12 + (w + 24) * t, y = -112 + 52 * t * (1 - t); s += C(x, y, 20, 'url(#t-glow)', 'opacity=".8"') + C(x, y, 6.5, bulbs[i % 5]); }
+    }
+    if (tier >= 3) {
+      const x = h - 6, y = -214;
+      s += C(x, y, 84, 'url(#t-glow)') + C(x, y, 50, 'url(#t-glow)') + star(x, y, 34, '#ffe27a') + star(x, y, 16, '#fffbe0')
+        + [[-h - 26, -150, 11], [-20, -196, 9], [h + 34, -120, 10], [h - 50, -244, 8], [-h + 100, -150, 7], [h + 20, -40, 8]].map(([sx, sy, r], i) => C(sx, sy, r * 2.2, 'url(#t-glow)', 'opacity=".7"') + star(sx, sy, r, '#fffbe0', `class="tw" style="animation-delay:${(i * 0.37).toFixed(2)}s"`)).join('');
+    }
+    if (tier >= 4) { const x = h + 4, y = -74; s += C(x, y, 44, 'url(#t-glow)') + C(x, y, 23, '#ffd24a') + C(x, y, 17, '#fff0a8') + P(`M${x} ${y + 9} c-15 -11 -9 -24 0 -15 c9 -9 15 4 0 15Z`, '#ff6f91'); }
+    return s;
+  };
+
+  window.TOWN_ART = { HOUSES, DECOR, lightsOf, perks, perkLights };
 })();
