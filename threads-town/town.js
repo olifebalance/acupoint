@@ -141,7 +141,7 @@
   const lights = lightItems.map((l) => l.html).join('');
 
   svg.innerHTML = `<defs><linearGradient id="t-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57e3d0"/><stop offset=".5" stop-color="#8b7cf6"/><stop offset="1" stop-color="#ff7ab8"/></linearGradient><radialGradient id="t-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>`
-    + `<g id="ground">${ground}</g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
+    + `<g id="ground">${ground}</g><g id="snowground" opacity="0" pointer-events="none"><rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#ffffff" opacity=".38"/><path d="${roadPath}" fill="none" stroke="#ffffff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
     + `<rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
   const thingsG = $('#things'), thingEls = [...thingsG.children];
   const lightEls = [...$('#lights').children];
@@ -377,6 +377,76 @@
   /* ───── 늦가을: 화면 위에서 낙엽이 천천히 떨어진다 (움직임 줄이기 설정이면 넣지 않는다) ───── */
   const leavesEl = $('#leaves');
   if (leavesEl && !RM) leavesEl.innerHTML = Array.from({ length: innerWidth < 600 ? 9 : 16 }, (_, i) => `<i style="left:${(i * 61 + 7) % 100}%;--d:${10 + (i * 7) % 9}s;--w:-${(i * 13) % 17}s;--c:${FALL[i % 5]};--s:${13 + (i * 5) % 9}px"></i>`).join('');
+
+  /* ───── 첫눈: 매일 밤 9시부터 10시까지(한국 시간) 눈이 내린다 ─────
+     시계만 보고 정하므로 같은 시간에 들어온 사람은 모두 같은 눈을 본다.
+     내리기 시작해 30분 동안 지붕과 길에 조금씩 쌓이고, 10시가 되면 10분 동안 녹는다.
+     주소에 ?snow 를 붙이면 시간과 상관없이 눈을 볼 수 있다(?snow=0.5 처럼 쌓인 정도도 정할 수 있다). */
+  const SNOW_FROM = 21, SNOW_MIN = 60;
+  const snowEl = $('#snow'), snowTag = $('#snowtag'), snowGround = $('#snowground');
+  // 지붕·나무·간판 윗면의 눈: 집 그림마다 한 번만 그림으로 떠서 맨 위 테두리만 흰 띠로 만든 뒤 겹쳐 둔다.
+  // (매 화면 필터로 계산하면 휴대폰이 느려져서, 처음 눈이 올 때 한 번만 만든다)
+  const CAP = { x: -230, y: -330, w: 460, h: 362, band: 9 };
+  let capsBuilt = false;
+  const loadImg = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+  async function buildCaps() {
+    if (capsBuilt) return; capsBuilt = true;
+    const cv = document.createElement('canvas'); cv.width = CAP.w; cv.height = CAP.h;
+    const ctx = cv.getContext('2d', { willReadFrequently: true });
+    const out = document.createElement('canvas'); out.width = CAP.w; out.height = CAP.h;
+    const octx = out.getContext('2d');
+    for (let i = 0; i < things.length; i++) {
+      const el = thingEls[i];
+      const src = `<svg xmlns="${NS}" width="${CAP.w}" height="${CAP.h}" viewBox="${CAP.x} ${CAP.y} ${CAP.w} ${CAP.h}">${el.innerHTML}</svg>`;
+      const im = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src));
+      if (!im) continue;
+      try {
+        ctx.clearRect(0, 0, CAP.w, CAP.h); ctx.drawImage(im, 0, 0);
+        const a = ctx.getImageData(0, 0, CAP.w, CAP.h).data;
+        const o = octx.createImageData(CAP.w, CAP.h), od = o.data;
+        let any = false;
+        for (let y = 0; y < CAP.h; y++) for (let x = 0; x < CAP.w; x++) {
+          const k = (y * CAP.w + x) * 4;
+          if (a[k + 3] < 140) continue;
+          const up = y - CAP.band;
+          if (up >= 0 && a[(up * CAP.w + x) * 4 + 3] >= 140) continue;
+          od[k] = od[k + 1] = od[k + 2] = 255; od[k + 3] = 245; any = true;
+        }
+        if (!any) continue;
+        octx.putImageData(o, 0, 0);
+        const cap = document.createElementNS(NS, 'image');
+        cap.setAttribute('class', 'cap'); cap.setAttribute('pointer-events', 'none');
+        cap.setAttribute('x', CAP.x); cap.setAttribute('y', CAP.y); cap.setAttribute('width', CAP.w); cap.setAttribute('height', CAP.h);
+        cap.setAttribute('href', out.toDataURL());
+        el.appendChild(cap);
+      } catch (e) { return; } // 그림을 읽을 수 없는 브라우저면 지붕 눈은 건너뛴다(길의 눈과 내리는 눈은 그대로)
+      if (i % 8 === 7) await new Promise((r) => setTimeout(r, 0));
+    }
+  }
+  const snowParam = new URLSearchParams(location.search).get('snow');
+  if (snowEl && !RM) snowEl.innerHTML = Array.from({ length: innerWidth < 600 ? 28 : 46 }, (_, i) => `<i style="left:${(i * 37 + 3) % 100}%;--d:${7 + (i * 5) % 7}s;--w:-${(i * 11) % 13}s;--s:${4 + (i * 3) % 6}px;--x:${(i % 2 ? 1 : -1) * (2 + (i % 4))}vw"></i>`).join('');
+  let snowState = '';
+  function updateSnow() {
+    let falling, amount;
+    if (snowParam !== null) { amount = snowParam === '' ? 1 : clamp(Number(snowParam) || 0, 0, 1); falling = amount > 0; }
+    else {
+      const k = new Date(Date.now() + 9 * 3600e3);
+      const m = k.getUTCHours() * 60 + k.getUTCMinutes() + k.getUTCSeconds() / 60 - SNOW_FROM * 60;
+      falling = m >= 0 && m < SNOW_MIN;
+      amount = falling ? Math.min(1, m / 30) : m >= SNOW_MIN && m < SNOW_MIN + 10 ? 1 - (m - SNOW_MIN) / 10 : 0;
+    }
+    const state = `${falling}|${amount.toFixed(2)}`;
+    if (state === snowState) return;
+    snowState = state;
+    snowGround.setAttribute('opacity', amount.toFixed(2));
+    thingsG.style.setProperty('--snow', Math.min(1, amount * 1.3).toFixed(2));
+    if (amount > 0.02) buildCaps();
+    if (snowEl) snowEl.hidden = !falling;
+    if (leavesEl) leavesEl.hidden = falling;
+    if (snowTag) snowTag.hidden = !falling;
+  }
+  updateSnow();
+  setInterval(updateSnow, 5000);
 
   /* ───── 함께: 다른 손님 보이기, 집마다 하트 (연결이 안 되면 혼자 다니는 마을 그대로) ───── */
   let net = null, told = 0, tellSoon = false;

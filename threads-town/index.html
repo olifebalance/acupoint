@@ -28,7 +28,13 @@
   @keyframes puff{0%{opacity:0;transform:translateY(16px) scale(.3)}18%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1}100%{opacity:0;transform:translateY(-64px) scale(1.5)}}
   .tw{animation:tw 1.5s ease-in-out infinite alternate}
   @keyframes tw{from{opacity:.25}to{opacity:1}}
-  #leaves{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+  #leaves,#snow{position:fixed;inset:0;overflow:hidden;pointer-events:none}
+  #leaves[hidden],#snow[hidden]{display:none}
+  #town .cap{opacity:var(--snow,0)}
+  #snowtag{margin:0;padding:7px 14px;border-radius:999px;background:rgba(255,255,255,.92);border:2px solid var(--ink);font-size:13px;font-weight:800}
+  #snowtag[hidden]{display:none}
+  #snow i{position:absolute;top:-4vh;width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:.92;box-shadow:0 0 3px rgba(120,140,170,.45);animation:snow var(--d) linear var(--w) infinite}
+  @keyframes snow{0%{transform:translate(0,0)}50%{transform:translate(var(--x),55vh)}100%{transform:translate(0,110vh)}}
   #leaves i{position:absolute;top:-8vh;width:var(--s,16px);height:calc(var(--s,16px)*.62);background:var(--c);border-radius:80% 12% 80% 12%;opacity:.9;animation:fall var(--d) linear var(--w) infinite}
   @keyframes fall{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(6vw,30vh) rotate(160deg)}50%{transform:translate(-3vw,60vh) rotate(300deg)}75%{transform:translate(7vw,90vh) rotate(470deg)}100%{transform:translate(1vw,120vh) rotate(640deg)}}
   @keyframes leg{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}
@@ -86,12 +92,13 @@
   .colors input:checked+span{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--ink)}
   .colors input:focus-visible+span{outline:3px solid var(--hot);outline-offset:6px}
   .fine{margin:12px 0 0;font-size:12px;opacity:.7}
-  @media (prefers-reduced-motion:reduce){#hint{transition:none}.tw{animation:none}#leaves{display:none}}
+  @media (prefers-reduced-motion:reduce){#hint{transition:none}.tw{animation:none}#leaves,#snow{display:none}}
 </style>
 </head>
 <body>
 <svg id="town" role="application" aria-label="스친 마을 지도. 집을 누르면 그 집으로 걸어갑니다."></svg>
 <div id="leaves" aria-hidden="true"></div>
+<div id="snow" aria-hidden="true" hidden></div>
 
 <header class="bar">
   <p class="brand"><b>스친 마을</b><span id="count"></span></p>
@@ -102,6 +109,7 @@
 </header>
 
 <div class="dock">
+  <p id="snowtag" hidden>❄ 마을에 눈이 와요 · 밤 10시까지</p>
   <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button></div>
   <p id="hint">가고 싶은 집을 누르면 걸어가요<span class="pc"> · 방향키로도 움직여요</span></p>
 </div>
@@ -129,14 +137,15 @@
     <p class="f" style="margin:16px 0 8px;font-size:14px;font-weight:800">옷 색</p>
     <div class="colors" id="g-colors"></div>
     <button class="go" type="submit">마을 들어가기</button>
+    <p class="fine">매일 밤 9시부터 10시까지 마을에 눈이 와요.</p>
     <p class="fine">로그인은 없어요. 닉네임과 모습, 출석은 이 기기에만 저장돼요.</p>
     <p class="fine">이 사이트는 Meta, Threads와 관련이 없습니다.</p>
   </form>
 </dialog>
 
-<script src="residents.js?v=6"></script>
-<script src="houses.js?v=6"></script>
-<script src="net.js?v=6"></script>
-<script src="town.js?v=6"></script>
+<script src="residents.js?v=7"></script>
+<script src="houses.js?v=7"></script>
+<script src="net.js?v=7"></script>
+<script src="town.js?v=7"></script>
 </body>
 </html>
