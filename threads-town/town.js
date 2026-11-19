@@ -11,8 +11,8 @@
   /* ───── 마을 지도 ─────
      집은 모두 아래(남쪽)를 보고 선다. 집 앞 40 아래에 길이 지나간다.
      자리가 모자라면 SLOTS에 줄을 더하고 ROADS를 늘리면 마을이 바깥으로 커진다. */
-  const COLS = 9, ROWS = 10, GX = 300, GY = 430, DX = 250, DY = 370, ROAD = 40;
-  const W = 3520, H = 3960;
+  const COLS = 9, ROWS = 8, GX = 300, GY = 430, DX = 250, DY = 370, ROAD = 40;
+  const W = 3520, H = 3220;
   const cx = (i) => GX + i * DX, cy = (j) => GY + j * DY;
   const MC = 4, MR = 3;                       // 미모 집: 가운데 칸
   const MIMO = [cx(MC), cy(MR)], PLAZA = [cx(MC), cy(MR - 1)], TEMPLE = [2800, 1510], CAFE = [3230, 1510];

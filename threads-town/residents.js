@@ -141,4 +141,23 @@ window.RESIDENTS = [
     intro: '뷰티 아티스트 슈쌤\n뷰티꿀팁도 덤' },
   { name: '아트맨', handle: 'artman_kind', color: '#f07a2b', color2: '#2f3a5a', roof: 'gable', props: ['house', 'brush', 'coffee'],
     intro: '집보다 먼저, 사는 사람을 봅니다\n광고디자이너 출신 · 인테리어 현장 17년\n할 수 있는건 무조건 다하는게 원칙\n가족과 사람의 기록 \u2018아빠는 아트맨\u2019' },
+
+  // ── 2기 (이음 정리 「스친 마을 2기 입점 신청 명단」 2026-11-19, 양식 올린 순서). 소개는 양식 원문 그대로,
+  //    원문에서 깨져 보이던 이모지 문자만 뺐다.
+  { name: '엘라수피자', handle: 'es.pizza', color: '#d9443a', color2: '#4f9a55', roof: 'gable', props: ['pizza', 'tree', 'pot'],
+    intro: '일산에서 미쿡식 피자 만들고 있어~\n곧 트리도 만들거야' },
+  { name: '드림치니', handle: 'js_dream_rn', color: '#7cc4ec', color2: '#f6a5c0', roof: 'hip', props: ['camera', 'shoe', 'heart'],
+    intro: '따뜻한 긍정으로 하루를 채우는 사람.\n누군가에게 작은 희망과 기쁨이 되길..' },
+  { name: '우주라이크', handle: 'seonwooju', color: '#8e6bd1', color2: '#5fa36b', roof: 'gable', props: ['book', 'note', 'brush'],
+    intro: '추리소설쓰고 노래불러요\n세상으로 나가고 싶어요' },
+  { name: '일월묘담', handle: 'ilwolmyodam', color: '#5fb8a5', color2: '#ffffff', roof: 'giwa', props: ['moon', 'sun', 'star'],
+    intro: '한국풍 타로·오라클부터 손가락 단주까지 일상의 쉼표를 만드는 일월묘담이야 :)' },
+  { name: '루노아토퍼', handle: 'lunoa_topper', color: '#f2c230', color2: '#2b2b2e', roof: 'gable', props: ['star', 'heart', 'balloon'],
+    intro: '스친들의 소중한 날을 예쁘게 꾸며주는 루노아야' },
+  { name: '봉일천 장작구이_세젤아', sign: '봉일천 장작구이', handle: 'djyjkr', color: '#4f9a55', color2: '#8e6bd1', roof: 'hip', props: ['fire', 'pot', 'heart'],
+    intro: '사람과 마음을 기록하며 행복을 전하는 세젤아.\n행복을 드세요❤️' },
+  { name: '허허허', handle: 'onevin75', color: '#3f7fd1', color2: '#d9443a', roof: 'gable', props: ['pen', 'book', 'heart'],
+    intro: '스레드에 잠시 쉬러 왔다가, 2년째 푹~ 눌러앉은 동네 아저씨야~♡ 만나서 반가워~' },
+  { name: '영호랑 세상 살이 연구소', sign: '영호랑 등불친구', handle: 'young_ho_rang', color: '#1f4f86', color2: '#ffffff', roof: 'hip', props: ['lantern', 'leaf', 'wave'],
+    intro: '세상을 지혜롭게 살아보려는 동반자분들 환영합니다~ (일상공감, 사유, 예술, 전략)' },
 ];
