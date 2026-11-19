@@ -141,7 +141,7 @@
   const lights = lightItems.map((l) => l.html).join('');
 
   svg.innerHTML = `<defs><linearGradient id="t-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57e3d0"/><stop offset=".5" stop-color="#8b7cf6"/><stop offset="1" stop-color="#ff7ab8"/></linearGradient><radialGradient id="t-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>`
-    + `<g id="ground">${ground}</g><g id="snowground" opacity="0" pointer-events="none"><rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#ffffff" opacity=".38"/><path d="${roadPath}" fill="none" stroke="#ffffff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/></g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
+    + `<g id="ground">${ground}</g><g id="snowground" opacity="0" pointer-events="none"><rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#c9d4e3" opacity=".62"/><path d="${roadPath}" fill="none" stroke="#ffffff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
     + `<rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
   const thingsG = $('#things'), thingEls = [...thingsG.children];
   const lightEls = [...$('#lights').children];
@@ -408,9 +408,9 @@
         for (let y = 0; y < CAP.h; y++) for (let x = 0; x < CAP.w; x++) {
           const k = (y * CAP.w + x) * 4;
           if (a[k + 3] < 140) continue;
-          const up = y - CAP.band;
-          if (up >= 0 && a[(up * CAP.w + x) * 4 + 3] >= 140) continue;
-          od[k] = od[k + 1] = od[k + 2] = 255; od[k + 3] = 245; any = true;
+          const inside = (yy) => yy >= 0 && a[(yy * CAP.w + x) * 4 + 3] >= 140;
+          if (!inside(y - CAP.band)) { od[k] = od[k + 1] = od[k + 2] = 255; od[k + 3] = 250; any = true; }
+          else if (!inside(y - CAP.band - 3)) { od[k] = 120; od[k + 1] = 138; od[k + 2] = 168; od[k + 3] = 120; }
         }
         if (!any) continue;
         octx.putImageData(o, 0, 0);
@@ -424,7 +424,7 @@
     }
   }
   const snowParam = new URLSearchParams(location.search).get('snow');
-  if (snowEl && !RM) snowEl.innerHTML = Array.from({ length: innerWidth < 600 ? 28 : 46 }, (_, i) => `<i style="left:${(i * 37 + 3) % 100}%;--d:${7 + (i * 5) % 7}s;--w:-${(i * 11) % 13}s;--s:${4 + (i * 3) % 6}px;--x:${(i % 2 ? 1 : -1) * (2 + (i % 4))}vw"></i>`).join('');
+  if (snowEl && !RM) snowEl.innerHTML = Array.from({ length: innerWidth < 600 ? 28 : 46 }, (_, i) => `<i style="left:${(i * 37 + 3) % 100}%;--d:${7 + (i * 5) % 7}s;--w:-${(i * 11) % 13}s;--s:${6 + (i * 3) % 7}px;--x:${(i % 2 ? 1 : -1) * (2 + (i % 4))}vw"></i>`).join('');
   let snowState = '';
   function updateSnow() {
     let falling, amount;
