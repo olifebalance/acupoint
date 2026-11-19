@@ -142,7 +142,7 @@
 
   svg.innerHTML = `<defs><linearGradient id="t-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57e3d0"/><stop offset=".5" stop-color="#8b7cf6"/><stop offset="1" stop-color="#ff7ab8"/></linearGradient><radialGradient id="t-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>`
     + `<g id="ground">${ground}</g><g id="snowground" opacity="0" pointer-events="none"><rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#c9d4e3" opacity=".62"/><path d="${roadPath}" fill="none" stroke="#ffffff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
-    + `<rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
+    + `<g id="balls" pointer-events="none"></g><rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
   const thingsG = $('#things'), thingEls = [...thingsG.children];
   const lightEls = [...$('#lights').children];
   const shown = new Map(); // 화면 밖의 집과 불빛은 그리지 않는다
@@ -262,6 +262,7 @@
       placeChar(q.el, q.x, q.y);
     });
     // 내 위치 알리기: 움직이는 동안 0.25초마다, 멈추면 한 번 더
+    snowTick(now);
     if (net && (moved || tellSoon) && now - told > 250) { told = now; tellSoon = moved; tell(); }
     frame(now);
     requestAnimationFrame(tick);
@@ -425,7 +426,7 @@
   }
   const snowParam = new URLSearchParams(location.search).get('snow');
   if (snowEl && !RM) snowEl.innerHTML = Array.from({ length: innerWidth < 600 ? 28 : 46 }, (_, i) => `<i style="left:${(i * 37 + 3) % 100}%;--d:${7 + (i * 5) % 7}s;--w:-${(i * 11) % 13}s;--s:${6 + (i * 3) % 7}px;--x:${(i % 2 ? 1 : -1) * (2 + (i % 4))}vw"></i>`).join('');
-  let snowState = '';
+  let snowState = '', snowFalling = false;
   function updateSnow() {
     let falling, amount;
     if (snowParam !== null) { amount = snowParam === '' ? 1 : clamp(Number(snowParam) || 0, 0, 1); falling = amount > 0; }
@@ -444,14 +445,97 @@
     if (snowEl) snowEl.hidden = !falling;
     if (leavesEl) leavesEl.hidden = falling;
     if (snowTag) snowTag.hidden = !falling;
+    if (falling !== snowFalling) { snowFalling = falling; if (falling) snowballs = Math.max(snowballs, 1); showBalls(); }
   }
+
+  /* ───── 눈싸움: 눈 오는 시간에만. 걸으면 눈덩이가 모이고(최대 3개), 가까운 손님에게 던진다 ─────
+     점수나 순위는 없다. 맞은 사람 머리에 눈이 터지고, 맞은 사람 화면에는 누가 던졌는지 잠깐 뜬다. */
+  const BALL_MAX = 3, BALL_WALK = 260, BALL_RANGE = 460;
+  const throwBtn = $('#throw'), toastEl = $('#toast'), ballsG = $('#balls');
+  let snowballs = 0, walked = 0, lastX = pos.x, lastY = pos.y;
+  let throwAt = 0, throwX = 0, throwY = 0, throwTo = '';
+  const flying = [];
+  function showBalls() {
+    throwBtn.hidden = !snowFalling;
+    throwBtn.disabled = snowballs < 1;
+    throwBtn.textContent = snowballs < 1 ? '걸으면 눈이 모여요' : `눈 던지기 ${'●'.repeat(snowballs)}${'○'.repeat(BALL_MAX - snowballs)}`;
+  }
+  let toastTimer = 0;
+  function toast(text) { toastEl.textContent = text; toastEl.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toastEl.hidden = true; }, 2600); }
+  // 맞은 손님: 머리 위에 눈이 얹히고 몸이 흔들린다
+  function hitChar(el) {
+    if (!el) return;
+    el.classList.remove('hit'); void el.getBBox(); el.classList.add('hit');
+    el.querySelectorAll('.headsnow').forEach((n) => n.remove());
+    el.insertAdjacentHTML('beforeend', '<g class="headsnow" pointer-events="none"><ellipse cx="0" cy="-60" rx="13" ry="6" fill="#fff" stroke="#9fb0c8" stroke-width="1.5"/><circle cx="-6" cy="-63" r="4" fill="#fff"/><circle cx="5" cy="-64" r="5" fill="#fff"/></g>');
+    clearTimeout(el._hit); el._hit = setTimeout(() => { el.classList.remove('hit'); el.querySelectorAll('.headsnow').forEach((n) => n.remove()); }, 1800);
+  }
+  function launch(x0, y0, x1, y1, target) {
+    const el = document.createElementNS(NS, 'g');
+    el.innerHTML = '<ellipse class="sh" rx="7" ry="3" fill="rgba(60,70,90,.25)"/><circle class="b" r="10" fill="#fff" stroke="#7f95b5" stroke-width="2.5"/>';
+    ballsG.appendChild(el);
+    const dur = clamp(Math.hypot(x1 - x0, y1 - y0) * 1.5, 320, 760);
+    flying.push({ el, x0, y0, x1, y1, t0: performance.now(), dur, target });
+  }
+  function splash(x, y) {
+    const el = document.createElementNS(NS, 'g');
+    el.setAttribute('transform', `translate(${x.toFixed(0)} ${y.toFixed(0)})`);
+    el.innerHTML = [[-14, -6], [12, -10], [-4, -16], [16, 4], [-16, 6], [2, 8]].map(([dx, dy]) => `<circle cx="${dx}" cy="${dy - 30}" r="5" fill="#fff" stroke="#9fb0c8" stroke-width="1.2"/>`).join('');
+    ballsG.appendChild(el);
+    flying.push({ el, splash: true, t0: performance.now(), dur: 520 });
+  }
+  function snowTick(now) {
+    if (snowFalling) {
+      const dd = Math.hypot(pos.x - lastX, pos.y - lastY);
+      if (dd < 200) walked += dd; // 순간이동(시험·재접속)은 세지 않는다
+      if (walked >= BALL_WALK) { walked = 0; if (snowballs < BALL_MAX) { snowballs++; showBalls(); } }
+    }
+    lastX = pos.x; lastY = pos.y;
+    for (let i = flying.length - 1; i >= 0; i--) {
+      const f = flying[i], t = Math.min(1, (now - f.t0) / f.dur);
+      if (f.splash) { f.el.setAttribute('opacity', (1 - t).toFixed(2)); f.el.querySelectorAll('circle').forEach((c, k) => c.setAttribute('transform', `translate(${(t * 10 * Math.sign(+c.getAttribute('cx') || 1)).toFixed(1)} ${(t * 6).toFixed(1)})`)); }
+      else {
+        const x = f.x0 + (f.x1 - f.x0) * t, y = f.y0 + (f.y1 - f.y0) * t, lift = 34 + Math.sin(Math.PI * t) * 70;
+        f.el.querySelector('.b').setAttribute('transform', `translate(${x.toFixed(1)} ${(y - lift).toFixed(1)})`);
+        f.el.querySelector('.sh').setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
+      }
+      if (t >= 1) {
+        f.el.remove(); flying.splice(i, 1);
+        if (!f.splash) { splash(f.x1, f.y1); hitChar(typeof f.target === 'function' ? f.target() : f.target); }
+      }
+    }
+  }
+  throwBtn.addEventListener('click', () => {
+    if (!snowFalling || snowballs < 1) return;
+    snowballs--; showBalls(); hint.done();
+    // 가장 가까운 손님을 겨눈다. 없으면 바라보는 쪽 바닥으로.
+    let best = null;
+    peers.forEach((q, uid) => { const dd = Math.hypot(q.x - pos.x, q.y - pos.y); if (dd < BALL_RANGE && (!best || dd < best.d)) best = { q, uid, d: dd }; });
+    const x1 = best ? best.q.x : clamp(pos.x + (faceLeft ? -170 : 170), 0, W), y1 = best ? best.q.y : pos.y;
+    if (best) faceLeft = best.q.x < pos.x;
+    throwAt = Date.now(); throwX = Math.round(x1); throwY = Math.round(y1); throwTo = best ? best.uid : '';
+    launch(pos.x, pos.y, x1, y1, best ? best.q.el : null);
+    tellSoon = true;
+  });
+  // 다른 손님이 던진 눈덩이
+  function onPeerThrow(uid, q, d) {
+    if (!(typeof d.s === 'number' && d.s && d.s !== q.s)) return;
+    q.s = d.s;
+    if (!snowFalling || Date.now() - d.s > 8000 || typeof d.sx !== 'number' || typeof d.sy !== 'number') return;
+    const mine = net && d.su === net.uid;
+    const target = mine ? me : (d.su && peers.get(d.su) ? peers.get(d.su).el : null);
+    launch(q.x, q.y, mine ? pos.x : clamp(d.sx, 0, W), mine ? pos.y : clamp(d.sy, 0, H), target);
+    if (mine) toast(`${String(d.n || '손님').slice(0, 8)}님이 눈을 던졌어요! ❄`);
+  }
+  showBalls();
+
   updateSnow();
   setInterval(updateSnow, 5000);
 
   /* ───── 함께: 다른 손님 보이기, 집마다 하트 (연결이 안 되면 혼자 다니는 마을 그대로) ───── */
   let net = null, told = 0, tellSoon = false;
   const peers = new Map();
-  const tell = () => net.setPresence({ n: myName, c: color, g: look, x: Math.round(pos.x), y: Math.round(pos.y), f: faceLeft, w: waveAt });
+  const tell = () => net.setPresence({ n: myName, c: color, g: look, x: Math.round(pos.x), y: Math.round(pos.y), f: faceLeft, w: waveAt, s: throwAt, sx: throwX, sy: throwY, su: throwTo });
   const onlineEl = $('#online');
   const showOnline = () => { onlineEl.hidden = !net; if (net) onlineEl.textContent = `지금 ${peers.size + 1}명`; };
   function onPeer(uid, d) {
@@ -459,7 +543,7 @@
     if (!d || typeof d.x !== 'number' || typeof d.y !== 'number') { if (q) { q.el.remove(); peers.delete(uid); showOnline(); } return; }
     if (!q) {
       if (peers.size >= 60) return; // 너무 많으면 더 그리지 않는다
-      q = { el: document.createElementNS(NS, 'g'), x: d.x, y: d.y, tx: d.x, ty: d.y, w: d.w || 0, sig: '', moving: false };
+      q = { el: document.createElementNS(NS, 'g'), x: d.x, y: d.y, tx: d.x, ty: d.y, w: d.w || 0, s: d.s || 0, sig: '', moving: false };
       q.el.setAttribute('class', 'peer');
       q.el.setAttribute('pointer-events', 'none');
       peers.set(uid, q); showOnline();
@@ -470,6 +554,7 @@
     q.tx = clamp(d.x, 0, W); q.ty = clamp(d.y, 0, H);
     q.el.querySelector('.body')?.setAttribute('transform', d.f ? 'scale(-1 1)' : '');
     if (d.w && d.w !== q.w) { q.w = d.w; if (Date.now() - d.w < 8000) waveEl(q.el); }
+    onPeerThrow(uid, q, d);
   }
 
   const TIERS = [10, 30, 100, 200]; // 200: 맞춤 업그레이드 대상(금빛 리본)
