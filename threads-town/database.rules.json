@@ -55,7 +55,7 @@
       ".read": true,
       "$house": {
         ".write": "auth != null && newData.exists()",
-        ".validate": "root.child('houses').child($house).exists() && newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1 && newData.parent().parent().child('given').child(auth.uid).child($house).val() === now"
+        ".validate": "root.child('houses').child($house).exists() && newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1 && newData.parent().parent().child('given').child(auth.uid).child($house).val() === now && newData.parent().parent().child('daily').child(auth.uid).child('t').val() === now"
       }
     },
     "given": {
@@ -96,7 +96,7 @@
       ".read": true,
       "$house": {
         ".write": "auth != null && newData.exists() && (!data.exists() || data.child('t').val() < now - 90000000)",
-        ".validate": "root.child('houses').child($house).exists() && newData.hasChildren(['n', 't'])",
+        ".validate": "root.child('houses').child($house).exists() && newData.hasChildren(['n', 't']) && newData.parent().parent().child('built').child(auth.uid).val() !== root.child('built').child(auth.uid).val()",
         "n": {
           ".validate": "newData.isString() && newData.val().length <= 8"
         },
@@ -109,6 +109,32 @@
         "$other": {
           ".validate": false
         }
+      }
+    },
+    "daily": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['d', 'n', 't']) && newData.child('d').val() * 86400000 <= now + 32400000 && now + 32400000 < (newData.child('d').val() + 1) * 86400000 && newData.child('n').val() === ((data.exists() && data.child('d').val() === newData.child('d').val()) ? data.child('n').val() + 1 : 1) && newData.child('n').val() <= 5",
+        "d": {
+          ".validate": "newData.isNumber()"
+        },
+        "n": {
+          ".validate": "newData.isNumber()"
+        },
+        "t": {
+          ".validate": "newData.val() === now"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "built": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.isNumber() && newData.val() * 86400000 <= now + 32400000 && now + 32400000 < (newData.val() + 1) * 86400000 && newData.val() !== data.val()"
       }
     }
   }

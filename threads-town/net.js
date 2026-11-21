@@ -9,6 +9,8 @@
 //   net.onHearts(fn)  fn({ 집열쇠: 개수 })     집마다 받은 하트
 //   net.lastGiven(key)                         내가 그 집에 마지막으로 하트를 준 시각(ms) 또는 0
 //   net.giveHeart(key) -> 'ok' | 'cooldown' | 'error'   (warm/집열쇠 에 마지막 하트 시각도 남긴다)
+//   net.heartsLeft() -> 오늘 더 줄 수 있는 하트 수 (하루 DAILY_HEARTS개, 한국 날짜 기준)
+//   net.builtToday() -> 오늘 눈사람을 이미 만들었는지 (하루 한 개)
 //   net.onWarm(fn)    fn({ 집열쇠: 마지막으로 하트를 받은 시각 })
 //   net.visit(key) -> 'ok' | 'already' | 'error'   오늘(한국 날짜) 이 집에 들른 손님 수를 1 올린다. 기기마다 하루 한 번.
 //   net.onVisits(fn)  fn({ 집열쇠: 오늘 다녀간 손님 수 })   날짜가 바뀌면 새 날짜로 다시 듣는다
@@ -18,6 +20,8 @@
   const COOLDOWN = 20 * 60 * 60 * 1000; // 한 집에 하트는 20시간에 한 번 (database.rules.json과 같은 값)
   const SDK = '10.12.2';
   const load = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('load ' + src)); document.head.appendChild(s); });
+  const DAILY_HEARTS = 5; // 한 손님이 하루에 줄 수 있는 하트 (database.rules.json의 5와 같은 값)
+  const dayNo = (ms = Date.now()) => Math.floor((ms + 9 * 3600e3) / 864e5); // 한국 날짜 번호
   const SNOWMAN_LIFE = 25 * 60 * 60 * 1000; // database.rules.json의 90000000과 같은 값
   const today = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); // 한국 날짜
   const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
@@ -39,6 +43,9 @@
     const given = {}, seen = {};
     try { Object.assign(given, (await db.ref(`given/${uid}`).once('value')).val() || {}); } catch (e) {}
     try { Object.assign(seen, (await db.ref(`seen/${uid}`).once('value')).val() || {}); } catch (e) {}
+    let daily = { d: 0, n: 0 }, built = 0;
+    try { daily = (await db.ref(`daily/${uid}`).once('value')).val() || daily; } catch (e) {}
+    try { built = (await db.ref(`built/${uid}`).once('value')).val() || 0; } catch (e) {}
     let snowmen = {};
     return {
       uid,
@@ -53,12 +60,16 @@
       lastGiven: (key) => given[key] || 0,
       async giveHeart(key) {
         if (Date.now() - (given[key] || 0) < COOLDOWN) return 'cooldown';
+        const d = dayNo(), n = daily.d === d ? daily.n + 1 : 1;
+        if (n > DAILY_HEARTS) return 'limit';
         try {
-          await db.ref().update({ [`given/${uid}/${key}`]: SV.TIMESTAMP, [`hearts/${key}`]: SV.increment(1), [`warm/${key}`]: SV.TIMESTAMP });
-          given[key] = Date.now();
+          await db.ref().update({ [`given/${uid}/${key}`]: SV.TIMESTAMP, [`hearts/${key}`]: SV.increment(1), [`warm/${key}`]: SV.TIMESTAMP, [`daily/${uid}`]: { d, n, t: SV.TIMESTAMP } });
+          given[key] = Date.now(); daily = { d, n };
           return 'ok';
         } catch (e) { return 'error'; }
       },
+      heartsLeft: () => DAILY_HEARTS - (daily.d === dayNo() ? daily.n : 0),
+      builtToday: () => built === dayNo(),
       onWarm(fn) { db.ref('warm').on('value', (s) => fn(s.val() || {})); },
       async visit(key) {
         const day = today();
@@ -83,7 +94,9 @@
       async buildSnowman(key, who) {
         const old = snowmen[key];
         if (old && Date.now() - old.t < SNOWMAN_LIFE) return 'taken';
-        try { await db.ref(`snowmen/${key}`).set({ n: who.n, c: who.c, t: SV.TIMESTAMP }); return 'ok'; } catch (e) { return 'error'; }
+        if (built === dayNo()) return 'limit';
+        const d = dayNo();
+        try { await db.ref().update({ [`snowmen/${key}`]: { n: who.n, c: who.c, t: SV.TIMESTAMP }, [`built/${uid}`]: d }); built = d; return 'ok'; } catch (e) { return 'error'; }
       },
     };
   }
@@ -99,6 +112,7 @@
     const send = (sets) => ch.postMessage({ type: 'h', sets });
     const write = (k, v) => { localStorage.setItem(k, JSON.stringify(v)); send([[k, JSON.stringify(v)]]); refresh(); };
     const warmFn = [], visitFn = [], snowFn = [], seen = {};
+    let daily = { d: 0, n: 0 }, built = 0;
     const refresh = () => { warmFn.forEach((fn) => fn(read('town-mock-warm'))); visitFn.forEach((fn) => fn(read('town-mock-visits-' + today()))); snowFn.forEach((fn) => fn(read('town-mock-snowmen'))); };
     let mine = null;
     ch.onmessage = ({ data }) => {
@@ -115,6 +129,9 @@
       lastGiven: (key) => given[key] || 0,
       async giveHeart(key) {
         if (Date.now() - (given[key] || 0) < COOLDOWN) return 'cooldown';
+        const d = dayNo(), n = daily.d === d ? daily.n + 1 : 1;
+        if (n > DAILY_HEARTS) return 'limit';
+        daily = { d, n };
         const h = hearts(); h[key] = (h[key] || 0) + 1;
         localStorage.setItem('town-mock-hearts', JSON.stringify(h));
         given[key] = Date.now();
@@ -122,6 +139,8 @@
         send([['town-mock-hearts', JSON.stringify(h)], ['town-mock-warm', JSON.stringify(w)]]); heartsFn.forEach((fn) => fn(h)); refresh();
         return 'ok';
       },
+      heartsLeft: () => DAILY_HEARTS - (daily.d === dayNo() ? daily.n : 0),
+      builtToday: () => built === dayNo(),
       onWarm(fn) { warmFn.push(fn); fn(read('town-mock-warm')); },
       async visit(key) {
         if (seen[key] === today()) return 'already';
@@ -134,6 +153,8 @@
       async buildSnowman(key, who) {
         const s = read('town-mock-snowmen');
         if (s[key] && Date.now() - s[key].t < SNOWMAN_LIFE) return 'taken';
+        if (built === dayNo()) return 'limit';
+        built = dayNo();
         s[key] = { n: who.n, c: who.c, t: Date.now() }; write('town-mock-snowmen', s);
         return 'ok';
       },
@@ -141,7 +162,7 @@
   }
 
   window.TownNet = {
-    COOLDOWN,
+    COOLDOWN, DAILY_HEARTS,
     async connect() {
       if (new URLSearchParams(location.search).has('mock')) return mockNet();
       try { return await timeout(firebaseNet(), 12000); } catch (e) { return null; }

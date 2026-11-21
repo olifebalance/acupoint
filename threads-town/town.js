@@ -590,16 +590,17 @@
     const key = keyOf(cardLot.r), n = hearts[key] || 0;
     const v = visits[key] || 0, sm = liveSnowman(key);
     cardNote.textContent = [v ? `오늘 다녀간 손님 ${v}명` : '오늘 첫 손님이에요', sm ? `⛄ ${sm.n}님이 만든 눈사람이 있어요` : ''].filter(Boolean).join(' · ');
-    const wait = Date.now() - net.lastGiven(key) < window.TownNet.COOLDOWN;
+    const wait = Date.now() - net.lastGiven(key) < window.TownNet.COOLDOWN, left = net.heartsLeft();
     heartNum.textContent = `하트 ${n}개`;
-    heartBtn.disabled = wait;
-    heartBtn.textContent = wait ? '오늘은 하트를 줬어요' : '하트 주기';
+    heartBtn.disabled = wait || left < 1;
+    heartBtn.textContent = wait ? '오늘은 하트를 줬어요' : left < 1 ? '오늘 하트 5개를 다 줬어요' : `하트 주기 · 오늘 ${left}개 남음`;
   }
   heartBtn.addEventListener('click', async () => {
     if (!net || !cardLot) return;
     heartBtn.disabled = true;
     const res = await net.giveHeart(keyOf(cardLot.r));
     if (res === 'error') { heartBtn.textContent = '지금은 하트를 줄 수 없어요'; return; }
+    if (res === 'ok' && net.heartsLeft() === 0) toast('오늘 하트를 다 줬어요. 내일 또 와요 💗');
     showHearts();
   });
 
@@ -658,9 +659,9 @@
     const l = near && near.r && !near.r.noHeart ? near : null;
     buildBtn.hidden = !(net && snowFalling && l);
     if (buildBtn.hidden) return;
-    const taken = liveSnowman(keyOf(l.r));
-    buildBtn.disabled = !!taken || snowballs < BALL_MAX;
-    buildBtn.textContent = taken ? '이미 눈사람이 있어요' : snowballs < BALL_MAX ? `눈덩이 ${BALL_MAX}개 모으면 눈사람` : '⛄ 여기 눈사람 만들기';
+    const taken = liveSnowman(keyOf(l.r)), done = net.builtToday();
+    buildBtn.disabled = !!taken || done || snowballs < BALL_MAX;
+    buildBtn.textContent = taken ? '이미 눈사람이 있어요' : done ? '오늘 눈사람은 만들었어요' : snowballs < BALL_MAX ? `눈덩이 ${BALL_MAX}개 모으면 눈사람` : '⛄ 여기 눈사람 만들기';
   }
   buildBtn.addEventListener('click', async () => {
     const l = near;
@@ -669,6 +670,7 @@
     const res = await net.buildSnowman(keyOf(l.r), { n: myName, c: color });
     if (res === 'ok') { snowballs = 0; showBalls(); toast(`${l.r.name} 앞에 눈사람을 세웠어요 ⛄`); }
     else if (res === 'taken') toast('누가 먼저 눈사람을 만들었어요');
+    else if (res === 'limit') toast('눈사람은 하루에 하나만 만들 수 있어요');
     else toast('지금은 눈사람을 만들 수 없어요');
     showBuild();
   });
