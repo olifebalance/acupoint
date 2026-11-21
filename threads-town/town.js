@@ -247,6 +247,7 @@
       near = n;
       visitBtn.hidden = !n;
       if (n) visitBtn.textContent = n.r ? `${n.r.name} 방문하기` : '빈 터 둘러보기';
+      showBuild();
     }
     if (Math.abs(nightTarget - night) > 0.001) {
       night = RM ? nightTarget : night + (nightTarget - night) * Math.min(1, dt * 1.6);
@@ -319,6 +320,7 @@
       go.hidden = false;
       dialog.style.setProperty('--c', l.r.color);
       cardLot = l; showHearts();
+      if (net && !l.r.noHeart) net.visit(keyOf(l.r));
     } else {
       $('#c-name').textContent = '빈 터';
       $('#c-handle').textContent = '';
@@ -445,7 +447,7 @@
     if (snowEl) snowEl.hidden = !falling;
     if (leavesEl) leavesEl.hidden = falling;
     if (snowTag) snowTag.hidden = !falling;
-    if (falling !== snowFalling) { snowFalling = falling; if (falling) snowballs = Math.max(snowballs, 1); showBalls(); }
+    if (falling !== snowFalling) { snowFalling = falling; if (falling) snowballs = Math.max(snowballs, 1); showBalls(); showBuild(); }
   }
 
   /* ───── 눈싸움: 눈 오는 시간에만. 걸으면 눈덩이가 모이고(최대 3개), 가까운 손님에게 던진다 ─────
@@ -488,7 +490,7 @@
     if (snowFalling) {
       const dd = Math.hypot(pos.x - lastX, pos.y - lastY);
       if (dd < 200) walked += dd; // 순간이동(시험·재접속)은 세지 않는다
-      if (walked >= BALL_WALK) { walked = 0; if (snowballs < BALL_MAX) { snowballs++; showBalls(); } }
+      if (walked >= BALL_WALK) { walked = 0; if (snowballs < BALL_MAX) { snowballs++; showBalls(); showBuild(); } }
     }
     lastX = pos.x; lastY = pos.y;
     for (let i = flying.length - 1; i >= 0; i--) {
@@ -507,7 +509,7 @@
   }
   throwBtn.addEventListener('click', () => {
     if (!snowFalling || snowballs < 1) return;
-    snowballs--; showBalls(); hint.done();
+    snowballs--; showBalls(); showBuild(); hint.done();
     // 가장 가까운 손님을 겨눈다. 없으면 바라보는 쪽 바닥으로.
     let best = null;
     peers.forEach((q, uid) => { const dd = Math.hypot(q.x - pos.x, q.y - pos.y); if (dd < BALL_RANGE && (!best || dd < best.d)) best = { q, uid, d: dd }; });
@@ -574,12 +576,15 @@
       p.l.innerHTML = window.TOWN_ART.perkLights(tier, l.w);
     });
   }
-  const heartBox = $('#c-hearts'), heartBtn = $('#c-heart'), heartNum = $('#c-heart-n');
+  const heartBox = $('#c-hearts'), heartBtn = $('#c-heart'), heartNum = $('#c-heart-n'), cardNote = $('#c-note');
   function showHearts() {
     const on = !!(net && cardLot && !cardLot.r.noHeart); // 쉼터(카페)는 하트를 받지 않는다
     heartBox.hidden = !on;
+    cardNote.hidden = !on;
     if (!on) return;
     const key = keyOf(cardLot.r), n = hearts[key] || 0;
+    const v = visits[key] || 0, sm = liveSnowman(key);
+    cardNote.textContent = [v ? `오늘 다녀간 손님 ${v}명` : '오늘 첫 손님이에요', sm ? `⛄ ${sm.n}님이 만든 눈사람이 있어요` : ''].filter(Boolean).join(' · ');
     const wait = Date.now() - net.lastGiven(key) < window.TownNet.COOLDOWN;
     heartNum.textContent = `하트 ${n}개`;
     heartBtn.disabled = wait;
@@ -593,6 +598,76 @@
     showHearts();
   });
 
+  /* ───── 따뜻한 집: 최근 3일 안에 하트를 받은 집은 연기가 피어오르고 창에 불이 켜진다 ─────
+     하트를 못 받아도 낡지는 않는다. 그냥 조용한 집으로 있다. */
+  const WARM_DAYS = 3;
+  let warm = {}, visits = {}, snowmen = {};
+  const warmEls = new Map();
+  const thingOf = (l) => thingEls[things.findIndex((t) => t.x === l.x && t.y === l.y)];
+  function showWarm() {
+    const now = Date.now();
+    lots.forEach((l) => {
+      if (!l.r || l.r.noHeart) return;
+      const on = now - (warm[keyOf(l.r)] || 0) < WARM_DAYS * 864e5;
+      let w = warmEls.get(l.slot);
+      if (!!w === on) return;
+      if (!on) { w.g.remove(); w.l.remove(); warmEls.delete(l.slot); return; }
+      w = { g: document.createElementNS(NS, 'g'), l: document.createElementNS(NS, 'g') };
+      w.g.setAttribute('pointer-events', 'none'); w.g.setAttribute('class', 'warm');
+      w.g.innerHTML = `<g opacity=".55">${window.TOWN_ART.lightsOf(l.r.house || 'kit')}</g>` + window.TOWN_ART.smoke();
+      thingOf(l).appendChild(w.g);
+      w.l.setAttribute('transform', `translate(${l.x} ${l.y})`); w.l.innerHTML = window.TOWN_ART.smoke();
+      lightsEl.appendChild(w.l);
+      warmEls.set(l.slot, w);
+    });
+  }
+  setInterval(showWarm, 60000);
+
+  /* ───── 눈사람: 눈 오는 시간에 눈덩이 3개로 지금 서 있는 집 앞에 세운다. 집마다 하나, 다음 날 눈이 그칠 때까지(25시간) 남는다 ───── */
+  const SNOWMAN_LIFE = 25 * 3600e3;
+  var buildBtn = $('#build'); // var: 눈 기능이 먼저 showBuild를 불러도 오류가 나지 않게
+  var snowEls = new Map();
+  const liveSnowman = (key) => { const s = snowmen[key]; return s && typeof s.t === 'number' && Date.now() - s.t < SNOWMAN_LIFE ? s : null; };
+  function showSnowmen() {
+    lots.forEach((l) => {
+      if (!l.r || l.r.noHeart) return;
+      const s = liveSnowman(keyOf(l.r)), sig = s ? `${s.n}|${s.c}|${s.t}` : '';
+      const old = snowEls.get(l.slot);
+      if ((old?.sig || '') === sig) return;
+      if (old) old.g.remove();
+      if (!s) { snowEls.delete(l.slot); return; }
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('pointer-events', 'none');
+      const name = String(s.n || '손님').slice(0, 8).replace(/[<&>"]/g, ''), col = /^#[0-9a-f]{6}$/i.test(s.c) ? s.c : '#ff7a59';
+      const label = `${name}님이 만든 눈사람`, lw = label.length * 10.5 + 14;
+      g.setAttribute('transform', `translate(${-l.w / 2 + 34} 16)`);
+      g.innerHTML = window.TOWN_ART.snowman(col) + `<g transform="translate(0 22)"><rect x="${-lw / 2}" y="-10" width="${lw}" height="20" rx="10" fill="#fff" stroke="#9fb0c8" stroke-width="1.5"/><text x="0" y="0.5" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="800" fill="#3d4650">${label}</text></g>`;
+      thingOf(l).appendChild(g);
+      snowEls.set(l.slot, { g, sig });
+    });
+    showBuild();
+  }
+  setInterval(showSnowmen, 60000);
+  function showBuild() {
+    if (!buildBtn || !snowEls) return;
+    const l = near && near.r && !near.r.noHeart ? near : null;
+    buildBtn.hidden = !(net && snowFalling && l);
+    if (buildBtn.hidden) return;
+    const taken = liveSnowman(keyOf(l.r));
+    buildBtn.disabled = !!taken || snowballs < BALL_MAX;
+    buildBtn.textContent = taken ? '이미 눈사람이 있어요' : snowballs < BALL_MAX ? `눈덩이 ${BALL_MAX}개 모으면 눈사람` : '⛄ 여기 눈사람 만들기';
+  }
+  buildBtn.addEventListener('click', async () => {
+    const l = near;
+    if (!net || !snowFalling || !l || !l.r || snowballs < BALL_MAX) return;
+    buildBtn.disabled = true;
+    const res = await net.buildSnowman(keyOf(l.r), { n: myName, c: color });
+    if (res === 'ok') { snowballs = 0; showBalls(); toast(`${l.r.name} 앞에 눈사람을 세웠어요 ⛄`); }
+    else if (res === 'taken') toast('누가 먼저 눈사람을 만들었어요');
+    else toast('지금은 눈사람을 만들 수 없어요');
+    showBuild();
+  });
+
   enter(myName);
   if (!store.get('town-name') && !new URLSearchParams(location.search).has('skip')) gate.showModal();
   window.TownNet.connect().then((n) => {
@@ -600,8 +675,12 @@
     net = n; tellSoon = true; showOnline();
     net.onPeers(onPeer);
     net.onHearts((h) => { hearts = h; showPerks(); showHearts(); });
+    net.onWarm((w) => { warm = w || {}; showWarm(); });
+    net.onVisits((v) => { visits = v || {}; showHearts(); });
+    net.onSnowmen((s) => { snowmen = s || {}; showSnowmen(); showHearts(); });
+    showBuild();
   });
 
-  window.__town = { pos, lots, walkTo, route, cam, setOverview, setNight, nodes, peers, get net() { return net; }, get hearts() { return hearts; } };
+  window.__town = { pos, lots, walkTo, route, cam, setOverview, setNight, nodes, peers, get net() { return net; }, get hearts() { return hearts; }, get warm() { return warm; }, showWarm };
   requestAnimationFrame(tick);
 })();

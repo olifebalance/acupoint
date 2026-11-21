@@ -355,5 +355,17 @@
     return s;
   };
 
-  window.TOWN_ART = { HOUSES, DECOR, lightsOf, perks, perkLights };
+  /** 최근 3일 안에 하트를 받은 집: 지붕 위로 연기가 피어오른다 (CSS .smoke 로 움직인다) */
+  const smoke = () => `<g class="smoke" transform="translate(44 -150)">${[0, 1, 2].map((i) => `<circle cx="0" cy="0" r="${11 + i * 3}" fill="#eef1f5" stroke="#a3adbb" stroke-width="2" style="animation-delay:${(i * 1.1).toFixed(1)}s"/>`).join('')}</g>`;
+
+  /** 눈사람. c는 목도리 색 */
+  const snowman = (c = '#ff7a59') => E(0, 2, 22, 6, 'rgba(60,70,90,.18)')
+    + L('M-14 -42 l-18 -12 M-26 -50 l-5 -6 M14 -42 l18 -12 M26 -50 l4 -7', '#7a5236', 3)
+    + C(0, -16, 18, '#fff', 'stroke="#a9b8cc" stroke-width="2"') + C(0, -43, 13, '#fff', 'stroke="#a9b8cc" stroke-width="2"') + C(0, -64, 10, '#fff', 'stroke="#a9b8cc" stroke-width="2"')
+    + R(-12, -57, 24, 6, c, 3) + R(4, -55, 7, 16, c, 3)
+    + C(-3.5, -66, 1.6, '#2f3a4f') + C(3.5, -66, 1.6, '#2f3a4f') + P('M0 -63 l9 2 l-9 2Z', '#ff8a3c')
+    + C(0, -45, 1.8, '#2f3a4f') + C(0, -38, 1.8, '#2f3a4f')
+    + P('M-9 -72 h18 l-2 -12 h-14Z', '#2f3a4f') + R(-12, -74, 24, 4, '#2f3a4f', 2);
+
+  window.TOWN_ART = { HOUSES, DECOR, lightsOf, perks, perkLights, smoke, snowman };
 })();

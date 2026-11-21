@@ -38,6 +38,13 @@
   #throw{background:#e9f1fb}
   #throw:disabled{opacity:.7;cursor:default}
   #throw[hidden]{display:none}
+  #build{background:#fff}
+  #build:disabled{opacity:.7;cursor:default}
+  #build[hidden]{display:none}
+  .sheet .note{margin:10px 0 0;font-size:13px;font-weight:700;opacity:.8}
+  .sheet .note[hidden]{display:none}
+  .smoke circle{transform-box:fill-box;transform-origin:50% 50%;animation:smoke 3.3s ease-out infinite;opacity:0}
+  @keyframes smoke{0%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:.85}100%{opacity:0;transform:translate(14px,-70px) scale(1.6)}}
   .hit .body{animation:hit .5s ease-in-out 2}
   @keyframes hit{0%,100%{translate:0 0}25%{translate:-4px 0}75%{translate:4px 0}}
   #snow i{position:absolute;top:-4vh;width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:.96;border:1.5px solid rgba(96,118,152,.55);box-shadow:0 1px 4px rgba(60,80,120,.45);animation:snow var(--d) linear var(--w) infinite}
@@ -99,7 +106,7 @@
   .colors input:checked+span{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--ink)}
   .colors input:focus-visible+span{outline:3px solid var(--hot);outline-offset:6px}
   .fine{margin:12px 0 0;font-size:12px;opacity:.7}
-  @media (prefers-reduced-motion:reduce){#hint{transition:none}.tw{animation:none}#leaves,#snow{display:none}}
+  @media (prefers-reduced-motion:reduce){#hint{transition:none}.tw{animation:none}#leaves,#snow{display:none}.smoke circle{animation:none;opacity:.6}}
 </style>
 </head>
 <body>
@@ -118,7 +125,7 @@
 <div class="dock">
   <p id="snowtag" hidden>❄ 마을에 눈이 와요 · 밤 10시까지</p>
   <p id="toast" role="status" hidden></p>
-  <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button><button class="chip" id="throw" hidden>눈 던지기</button></div>
+  <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button><button class="chip" id="throw" hidden>눈 던지기</button><button class="chip" id="build" hidden>눈사람 만들기</button></div>
   <p id="hint">가고 싶은 집을 누르면 걸어가요<span class="pc"> · 방향키로도 움직여요</span></p>
 </div>
 
@@ -130,6 +137,7 @@
     <p class="handle" id="c-handle"></p>
     <p class="intro" id="c-intro"></p>
     <div class="hearts" id="c-hearts" hidden><b id="c-heart-n"></b><button type="button" id="c-heart">하트 주기</button></div>
+    <p class="note" id="c-note" hidden></p>
     <a class="go" id="c-go" target="_blank" rel="noopener noreferrer"></a>
   </div>
 </dialog>
@@ -151,9 +159,9 @@
   </form>
 </dialog>
 
-<script src="residents.js?v=9"></script>
-<script src="houses.js?v=9"></script>
-<script src="net.js?v=9"></script>
-<script src="town.js?v=9"></script>
+<script src="residents.js?v=10"></script>
+<script src="houses.js?v=10"></script>
+<script src="net.js?v=10"></script>
+<script src="town.js?v=10"></script>
 </body>
 </html>
