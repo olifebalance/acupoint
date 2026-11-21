@@ -23,6 +23,12 @@
   .peer.walking .leg.l{animation:leg .36s ease-in-out infinite alternate}
   .peer.walking .leg.r{animation:leg .36s ease-in-out infinite alternate-reverse}
   .waving .arm{animation:wave .42s ease-in-out 4 alternate}
+  .hugging .arm{animation:hugarm 1.6s ease-in-out}
+  .hugging .body{animation:hugbody 1.6s ease-in-out}
+  @keyframes hugarm{0%,100%{transform:rotate(0)}15%,85%{transform:rotate(-115deg)}}
+  @keyframes hugbody{0%,100%{translate:0 0}15%,85%{translate:5px -2px}40%{translate:6px -4px}60%{translate:5px -1px}}
+  #hug{background:#ffe3ec}
+  #hug[hidden]{display:none}
   @keyframes wave{from{transform:rotate(-140deg) scale(1.2,1.45)}to{transform:rotate(-215deg) scale(1.2,1.45)}}
   .puff .h{transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation:puff 1.5s ease-out both}
   @keyframes puff{0%{opacity:0;transform:translateY(16px) scale(.3)}18%{opacity:1;transform:translateY(0) scale(1.15)}70%{opacity:1}100%{opacity:0;transform:translateY(-64px) scale(1.5)}}
@@ -125,7 +131,7 @@
 <div class="dock">
   <p id="snowtag" hidden>❄ 마을에 눈이 와요 · 밤 10시까지</p>
   <p id="toast" role="status" hidden></p>
-  <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button><button class="chip" id="throw" hidden>눈 던지기</button><button class="chip" id="build" hidden>눈사람 만들기</button></div>
+  <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button><button class="chip" id="throw" hidden>눈 던지기</button><button class="chip" id="build" hidden>눈사람 만들기</button><button class="chip" id="hug" hidden>안아주기</button></div>
   <p id="hint">가고 싶은 집을 누르면 걸어가요<span class="pc"> · 방향키로도 움직여요</span></p>
 </div>
 
@@ -159,9 +165,9 @@
   </form>
 </dialog>
 
-<script src="residents.js?v=12"></script>
-<script src="houses.js?v=12"></script>
-<script src="net.js?v=12"></script>
-<script src="town.js?v=12"></script>
+<script src="residents.js?v=13"></script>
+<script src="houses.js?v=13"></script>
+<script src="net.js?v=13"></script>
+<script src="town.js?v=13"></script>
 </body>
 </html>

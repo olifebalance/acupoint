@@ -15,14 +15,14 @@
 //   net.visit(key) -> 'ok' | 'already' | 'error'   오늘(한국 날짜) 이 집에 들른 손님 수를 1 올린다. 기기마다 하루 한 번.
 //   net.onVisits(fn)  fn({ 집열쇠: 오늘 다녀간 손님 수 })   날짜가 바뀌면 새 날짜로 다시 듣는다
 //   net.onSnowmen(fn) fn({ 집열쇠: { n: 만든 사람, c: 목도리 색, t: 만든 시각 } })
-//   net.buildSnowman(key, { n, c }) -> 'ok' | 'taken' | 'error'   집마다 하나, 만든 지 25시간이 지나야 새로 만들 수 있다
+//   net.buildSnowman(key, { n, c }) -> 'ok' | 'taken' | 'error'   집마다 하나, 만든 지 20시간이 지나야 새로 만들 수 있다
 (() => {
   const COOLDOWN = 20 * 60 * 60 * 1000; // 한 집에 하트는 20시간에 한 번 (database.rules.json과 같은 값)
   const SDK = '10.12.2';
   const load = (src) => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('load ' + src)); document.head.appendChild(s); });
   const DAILY_HEARTS = 5; // 한 손님이 하루에 줄 수 있는 하트 (database.rules.json의 5와 같은 값)
   const dayNo = (ms = Date.now()) => Math.floor((ms + 9 * 3600e3) / 864e5); // 한국 날짜 번호
-  const SNOWMAN_LIFE = 25 * 60 * 60 * 1000; // database.rules.json의 90000000과 같은 값
+  const SNOWMAN_LIFE = 20 * 60 * 60 * 1000; // database.rules.json의 72000000과 같은 값
   const today = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); // 한국 날짜
   const timeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 

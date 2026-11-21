@@ -43,6 +43,12 @@
         "su": {
           ".validate": "newData.isString() && newData.val().length <= 128"
         },
+        "h": {
+          ".validate": "newData.isNumber()"
+        },
+        "hu": {
+          ".validate": "newData.isString() && newData.val().length <= 128"
+        },
         "$other": {
           ".validate": false
         }
@@ -95,7 +101,7 @@
     "snowmen": {
       ".read": true,
       "$house": {
-        ".write": "auth != null && newData.exists() && (!data.exists() || data.child('t').val() < now - 90000000)",
+        ".write": "auth != null && newData.exists() && (!data.exists() || data.child('t').val() < now - 72000000)",
         ".validate": "root.child('houses').child($house).exists() && newData.hasChildren(['n', 't']) && newData.parent().parent().child('built').child(auth.uid).val() !== root.child('built').child(auth.uid).val()",
         "n": {
           ".validate": "newData.isString() && newData.val().length <= 8"

@@ -201,14 +201,16 @@
   const SPEED = 230; // 1초에 가는 거리
   const keys = new Set();
   const blocked = (x, y) => x < 40 || x > W - 40 || y < 120 || y > H - 40 || lots.some((l) => Math.abs(x - l.x) < l.w / 2 + 12 && y > l.y - 76 && y < l.y + 6);
-  function walkTo(target, lot) {
+  function walkTo(target, lot, keepHug) {
     path = route([pos.x, pos.y], target);
+    if (!keepHug) { hugTarget = null; hugging = false; } // 다른 곳을 누르면 안아주러 가던 걸 멈춘다
     goal = lot || null;
     marker.innerHTML = `<g transform="translate(${target[0]} ${target[1]})"><ellipse rx="20" ry="8" fill="none" stroke="#ff7a59" stroke-width="4"/><ellipse rx="7" ry="3" fill="#ff7a59"/></g>`;
     hint.done();
   }
   function arrive() {
     marker.innerHTML = '';
+    if (hugTarget) { const t = hugTarget; hugTarget = null; doHug(t); }
     if (goal) { const l = goal; goal = null; openCard(l); }
   }
   // 밤: 마을 위에 어두운 막을 덮고, 그 위에 창문·가로등 불빛을 켠다
@@ -221,13 +223,13 @@
     const kx = (keys.has('ArrowRight') || keys.has('d') ? 1 : 0) - (keys.has('ArrowLeft') || keys.has('a') ? 1 : 0);
     const ky = (keys.has('ArrowDown') || keys.has('s') ? 1 : 0) - (keys.has('ArrowUp') || keys.has('w') ? 1 : 0);
     if ((kx || ky) && !dialog.open) {
-      path = []; goal = null; marker.innerHTML = '';
+      path = []; goal = null; marker.innerHTML = ''; hugTarget = null; hugging = false;
       const n = Math.hypot(kx, ky), dx = (kx / n) * SPEED * dt, dy = (ky / n) * SPEED * dt;
       if (!blocked(pos.x + dx, pos.y)) { pos.x += dx; moved = true; }
       if (!blocked(pos.x, pos.y + dy)) { pos.y += dy; moved = true; }
       if (kx) faceLeft = kx < 0;
     } else if (path.length) {
-      let left = SPEED * dt;
+      let left = SPEED * (hugTarget ? 2 : 1) * dt;
       while (left > 0 && path.length) {
         const [tx, ty] = path[0], d = Math.hypot(tx - pos.x, ty - pos.y);
         if (d <= left) { pos.x = tx; pos.y = ty; left -= d; path.shift(); }
@@ -264,6 +266,7 @@
     });
     // 내 위치 알리기: 움직이는 동안 0.25초마다, 멈추면 한 번 더
     snowTick(now);
+    hugTick();
     if (net && (moved || tellSoon) && now - told > 250) { told = now; tellSoon = moved; tell(); }
     frame(now);
     requestAnimationFrame(tick);
@@ -542,7 +545,7 @@
   /* ───── 함께: 다른 손님 보이기, 집마다 하트 (연결이 안 되면 혼자 다니는 마을 그대로) ───── */
   let net = null, told = 0, tellSoon = false;
   const peers = new Map();
-  const tell = () => net.setPresence({ n: myName, c: color, g: look, x: Math.round(pos.x), y: Math.round(pos.y), f: faceLeft, w: waveAt, s: throwAt, sx: throwX, sy: throwY, su: throwTo });
+  const tell = () => net.setPresence({ n: myName, c: color, g: look, x: Math.round(pos.x), y: Math.round(pos.y), f: faceLeft, w: waveAt, s: throwAt, sx: throwX, sy: throwY, su: throwTo, h: hugAt, hu: hugTo });
   const onlineEl = $('#online');
   const showOnline = () => { onlineEl.hidden = !net; if (net) onlineEl.textContent = `지금 ${peers.size + 1}명`; };
   function onPeer(uid, d) {
@@ -550,7 +553,7 @@
     if (!d || typeof d.x !== 'number' || typeof d.y !== 'number') { if (q) { q.el.remove(); peers.delete(uid); showOnline(); } return; }
     if (!q) {
       if (peers.size >= 60) return; // 너무 많으면 더 그리지 않는다
-      q = { el: document.createElementNS(NS, 'g'), x: d.x, y: d.y, tx: d.x, ty: d.y, w: d.w || 0, s: d.s || 0, sig: '', moving: false };
+      q = { el: document.createElementNS(NS, 'g'), x: d.x, y: d.y, tx: d.x, ty: d.y, w: d.w || 0, s: d.s || 0, h: d.h || 0, sig: '', moving: false };
       q.el.setAttribute('class', 'peer');
       q.el.setAttribute('pointer-events', 'none');
       peers.set(uid, q); showOnline();
@@ -562,6 +565,7 @@
     q.el.querySelector('.body')?.setAttribute('transform', d.f ? 'scale(-1 1)' : '');
     if (d.w && d.w !== q.w) { q.w = d.w; if (Date.now() - d.w < 8000) waveEl(q.el); }
     onPeerThrow(uid, q, d);
+    onPeerHug(uid, q, d);
   }
 
   const TIERS = [10, 30, 100, 200]; // 200: 맞춤 업그레이드 대상(금빛 리본)
@@ -604,9 +608,9 @@
     showHearts();
   });
 
-  /* ───── 따뜻한 집: 최근 3일 안에 하트를 받은 집은 연기가 피어오르고 창에 불이 켜진다 ─────
+  /* ───── 따뜻한 집: 하트를 받으면 그때부터 12시간 동안 연기가 피어오르고 창에 불이 켜진다 ─────
      하트를 못 받아도 낡지는 않는다. 그냥 조용한 집으로 있다. */
-  const WARM_DAYS = 3;
+  const WARM_HOURS = 12;
   let warm = {}, visits = {}, snowmen = {};
   const warmEls = new Map();
   const thingOf = (l) => thingEls[things.findIndex((t) => t.x === l.x && t.y === l.y)];
@@ -614,7 +618,7 @@
     const now = Date.now();
     lots.forEach((l) => {
       if (!l.r || l.r.noHeart) return;
-      const on = now - (warm[keyOf(l.r)] || 0) < WARM_DAYS * 864e5;
+      const on = now - (warm[keyOf(l.r)] || 0) < WARM_HOURS * 3600e3;
       let w = warmEls.get(l.slot);
       if (!!w === on) return;
       if (!on) { w.g.remove(); w.l.remove(); warmEls.delete(l.slot); return; }
@@ -629,8 +633,8 @@
   }
   setInterval(showWarm, 60000);
 
-  /* ───── 눈사람: 눈 오는 시간에 눈덩이 3개로 지금 서 있는 집 앞에 세운다. 집마다 하나, 다음 날 눈이 그칠 때까지(25시간) 남는다 ───── */
-  const SNOWMAN_LIFE = 25 * 3600e3;
+  /* ───── 눈사람: 눈 오는 시간에 눈덩이 3개로 지금 서 있는 집 앞에 세운다. 집마다 하나, 만든 때부터 20시간 남는다 ───── */
+  const SNOWMAN_LIFE = 20 * 3600e3; // 밤에 만든 눈사람이 다음 날 낮까지 남고, 그날 밤 눈 오기 전에 녹는다
   var buildBtn = $('#build'); // var: 눈 기능이 먼저 showBuild를 불러도 오류가 나지 않게
   var snowEls = new Map();
   const liveSnowman = (key) => { const s = snowmen[key]; return s && typeof s.t === 'number' && Date.now() - s.t < SNOWMAN_LIFE ? s : null; };
@@ -674,6 +678,56 @@
     else toast('지금은 눈사람을 만들 수 없어요');
     showBuild();
   });
+
+  /* ───── 안아주기: 가까이 있는 손님에게 달려가서 꼭 안아 준다. 둘 머리 위로 하트가 뜬다 ───── */
+  const HUG_RANGE = 650;
+  var hugBtn = $('#hug'), hugTarget = null, hugging = false, hugAt = 0, hugTo = '', hugReady = 0;
+  const nearestPeer = (range) => { let best = null; peers.forEach((q, uid) => { const dd = Math.hypot(q.x - pos.x, q.y - pos.y); if (dd < range && (!best || dd < best.d)) best = { q, uid, d: dd }; }); return best; };
+  function hugChar(el, faceTo) {
+    if (!el) return;
+    if (typeof faceTo === 'boolean') el.querySelector('.body')?.setAttribute('transform', faceTo ? 'scale(-1 1)' : '');
+    el.classList.remove('hugging'); void el.getBBox(); el.classList.add('hugging');
+    waveEl(el); el.classList.remove('waving');
+    clearTimeout(el._hug); el._hug = setTimeout(() => el.classList.remove('hugging'), 1800);
+  }
+  function doHug(t) {
+    const q = peers.get(t.uid);
+    if (!q) { hugging = false; return; }
+    faceLeft = q.x < pos.x;
+    hugAt = Date.now(); hugTo = t.uid; tellSoon = true;
+    hugChar(me, faceLeft); hugChar(q.el, !faceLeft);
+    setTimeout(() => { hugging = false; }, 1800);
+  }
+  let hugShown = '';
+  function hugTick() {
+    if (!hugBtn) return;
+    const best = net ? nearestPeer(HUG_RANGE) : null;
+    const label = !best ? '' : hugging ? (hugTarget ? '달려가는 중…' : '꼭 안는 중 🤗') : `${best.q.sig ? best.q.el.querySelector('text')?.textContent || '손님' : '손님'}님 안아주기 🤗`;
+    if (label === hugShown) return;
+    hugShown = label; hugBtn.hidden = !best; hugBtn.textContent = label; hugBtn.disabled = hugging;
+  }
+  hugBtn.addEventListener('click', () => {
+    const best = nearestPeer(HUG_RANGE);
+    if (!best || hugging || Date.now() < hugReady) return;
+    hugReady = Date.now() + 2500; hint.done();
+    const side = best.q.x < pos.x ? 1 : -1; // 상대의 내 쪽 옆에 선다
+    hugging = true;
+    if (best.d < 46) { doHug({ uid: best.uid }); return; }
+    walkTo([best.q.x + side * 30, best.q.y], null, true);
+    hugTarget = { uid: best.uid };
+  });
+  // 다른 손님이 누군가를 안아 줬을 때
+  function onPeerHug(uid, q, d) {
+    if (!(typeof d.h === 'number' && d.h && d.h !== q.h)) return;
+    q.h = d.h;
+    if (Date.now() - d.h > 8000) return;
+    const mine = net && d.hu === net.uid;
+    const other = mine ? null : peers.get(d.hu);
+    const tx = mine ? pos.x : other ? other.x : q.x;
+    hugChar(q.el, tx < q.x);
+    if (mine) { faceLeft = q.x < pos.x; hugChar(me, faceLeft); toast(`${String(d.n || '손님').slice(0, 8)}님이 달려와서 안아줬어요 🤗`); }
+    else if (other) hugChar(other.el, q.x < other.x);
+  }
 
   enter(myName);
   if (!store.get('town-name') && !new URLSearchParams(location.search).has('skip')) gate.showModal();
