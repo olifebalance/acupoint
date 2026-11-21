@@ -407,19 +407,24 @@
         ctx.clearRect(0, 0, CAP.w, CAP.h); ctx.drawImage(im, 0, 0);
         const a = ctx.getImageData(0, 0, CAP.w, CAP.h).data;
         const o = octx.createImageData(CAP.w, CAP.h), od = o.data;
-        let any = false;
+        let any = false, x0 = CAP.w, y0 = CAP.h, x1 = -1, y1 = -1;
         for (let y = 0; y < CAP.h; y++) for (let x = 0; x < CAP.w; x++) {
           const k = (y * CAP.w + x) * 4;
           if (a[k + 3] < 140) continue;
           const inside = (yy) => yy >= 0 && a[(yy * CAP.w + x) * 4 + 3] >= 140;
           if (!inside(y - CAP.band)) { od[k] = od[k + 1] = od[k + 2] = 255; od[k + 3] = 250; any = true; }
           else if (!inside(y - CAP.band - 3)) { od[k] = 120; od[k + 1] = 138; od[k + 2] = 168; od[k + 3] = 120; }
+          else continue;
+          if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
         }
         if (!any) continue;
-        octx.putImageData(o, 0, 0);
+        // 눈이 있는 부분만 잘라서 작은 그림으로 만든다(통째로 두면 휴대폰 메모리가 모자라 화면이 깜빡인다)
+        const cw = x1 - x0 + 1, ch = y1 - y0 + 1;
+        out.width = cw; out.height = ch;
+        octx.putImageData(o, -x0, -y0, x0, y0, cw, ch);
         const cap = document.createElementNS(NS, 'image');
         cap.setAttribute('class', 'cap'); cap.setAttribute('pointer-events', 'none');
-        cap.setAttribute('x', CAP.x); cap.setAttribute('y', CAP.y); cap.setAttribute('width', CAP.w); cap.setAttribute('height', CAP.h);
+        cap.setAttribute('x', CAP.x + x0); cap.setAttribute('y', CAP.y + y0); cap.setAttribute('width', cw); cap.setAttribute('height', ch);
         cap.setAttribute('href', out.toDataURL());
         el.appendChild(cap);
       } catch (e) { return; } // 그림을 읽을 수 없는 브라우저면 지붕 눈은 건너뛴다(길의 눈과 내리는 눈은 그대로)
