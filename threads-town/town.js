@@ -171,7 +171,7 @@
     // 같은 자리에 손님이 여럿 서 있으면 서로를 건너뛰고 비교한다.
     // (매 프레임 다시 끼워 넣으면 손 흔들기 같은 움직임이 처음으로 되돌아가 멈춰 보인다)
     let next = el.nextSibling;
-    while (next && next !== before && (next.id === 'me' || next.classList.contains('peer'))) next = next.nextSibling;
+    while (next && next !== before && (next.id === 'me' || next.classList.contains('peer') || next.classList.contains('npc'))) next = next.nextSibling;
     if (next !== before) thingsG.insertBefore(el, before);
   };
   thingsG.appendChild(me);
@@ -434,18 +434,18 @@
       if (i % 8 === 7) await new Promise((r) => setTimeout(r, 0));
     }
   }
+  // 겨울 마을: 눈이 늘 조금씩 내리고 쌓여 있다. 밤 9시부터 10시까지는 함박눈(눈송이가 많고 크다).
+  // ?snow 를 붙이면 언제든 함박눈을 볼 수 있다.
   const snowParam = new URLSearchParams(location.search).get('snow');
-  if (snowEl && !RM) snowEl.innerHTML = Array.from({ length: innerWidth < 600 ? 28 : 46 }, (_, i) => `<i style="left:${(i * 37 + 3) % 100}%;--d:${7 + (i * 5) % 7}s;--w:-${(i * 11) % 13}s;--s:${6 + (i * 3) % 7}px;--x:${(i % 2 ? 1 : -1) * (2 + (i % 4))}vw"></i>`).join('');
-  let snowState = '', snowFalling = false;
+  const flakes = (n, big) => Array.from({ length: n }, (_, i) => `<i style="left:${(i * 37 + 3) % 100}%;--d:${(big ? 6 : 9) + (i * 5) % 7}s;--w:-${(i * 11) % 13}s;--s:${(big ? 8 : 5) + (i * 3) % (big ? 8 : 5)}px;--x:${(i % 2 ? 1 : -1) * (2 + (i % 4))}vw"></i>`).join('');
+  let snowState = '', snowFalling = false, heavyShown = null;
   function updateSnow() {
-    let falling, amount;
-    if (snowParam !== null) { amount = snowParam === '' ? 1 : clamp(Number(snowParam) || 0, 0, 1); falling = amount > 0; }
-    else {
-      const k = new Date(Date.now() + 9 * 3600e3);
-      const m = k.getUTCHours() * 60 + k.getUTCMinutes() + k.getUTCSeconds() / 60 - SNOW_FROM * 60;
-      falling = m >= 0 && m < SNOW_MIN;
-      amount = falling ? Math.min(1, m / 30) : m >= SNOW_MIN && m < SNOW_MIN + 10 ? 1 - (m - SNOW_MIN) / 10 : 0;
-    }
+    const k = new Date(Date.now() + 9 * 3600e3);
+    const m = k.getUTCHours() * 60 + k.getUTCMinutes() - SNOW_FROM * 60;
+    const heavy = snowParam !== null || (m >= 0 && m < SNOW_MIN);
+    const falling = true, amount = 1;
+    if (snowEl && !RM && heavy !== heavyShown) { heavyShown = heavy; snowEl.innerHTML = heavy ? flakes(innerWidth < 600 ? 34 : 56, true) : flakes(innerWidth < 600 ? 14 : 22, false); }
+    if (snowTag) snowTag.hidden = !heavy;
     const state = `${falling}|${amount.toFixed(2)}`;
     if (state === snowState) return;
     snowState = state;
@@ -453,8 +453,7 @@
     thingsG.style.setProperty('--snow', Math.min(1, amount * 1.3).toFixed(2));
     if (amount > 0.02) buildCaps();
     if (snowEl) snowEl.hidden = !falling;
-    if (leavesEl) leavesEl.hidden = falling;
-    if (snowTag) snowTag.hidden = !falling;
+    if (leavesEl) leavesEl.hidden = true; // 겨울이라 낙엽은 날리지 않는다
     if (falling !== snowFalling) { snowFalling = falling; if (falling) snowballs = Math.max(snowballs, 1); showBalls(); showBuild(); }
   }
 
@@ -593,7 +592,7 @@
     if (!on) return;
     const key = keyOf(cardLot.r), n = hearts[key] || 0;
     const v = visits[key] || 0, sm = liveSnowman(key);
-    cardNote.textContent = [v ? `오늘 다녀간 손님 ${v}명` : '오늘 첫 손님이에요', sm ? `⛄ ${sm.n}님이 만든 눈사람이 있어요` : ''].filter(Boolean).join(' · ');
+    cardNote.textContent = [zombieNote(key), v ? `오늘 다녀간 손님 ${v}명` : '오늘 첫 손님이에요', sm ? `⛄ ${sm.n}님이 만든 눈사람이 있어요` : ''].filter(Boolean).join(' · ');
     const wait = Date.now() - net.lastGiven(key) < window.TownNet.COOLDOWN, left = net.heartsLeft();
     heartNum.textContent = `하트 ${n}개`;
     heartBtn.disabled = wait || left < 1;
@@ -605,6 +604,7 @@
     const res = await net.giveHeart(keyOf(cardLot.r));
     if (res === 'error') { heartBtn.textContent = '지금은 하트를 줄 수 없어요'; return; }
     if (res === 'ok' && net.heartsLeft() === 0) toast('오늘 하트를 다 줬어요. 내일 또 와요 💗');
+    if (res === 'ok') cureHouse(cardLot);
     showHearts();
   });
 
@@ -691,6 +691,7 @@
     clearTimeout(el._hug); el._hug = setTimeout(() => el.classList.remove('hugging'), 1800);
   }
   function doHug(t) {
+    if (t.zombie) { hugZombie(t.zombie); return; }
     const q = peers.get(t.uid);
     if (!q) { hugging = false; return; }
     faceLeft = q.x < pos.x;
@@ -701,20 +702,21 @@
   let hugShown = '';
   function hugTick() {
     if (!hugBtn) return;
-    const best = net ? nearestPeer(HUG_RANGE) : null;
-    const label = !best ? '' : hugging ? (hugTarget ? '달려가는 중…' : '꼭 안는 중 🤗') : `${best.q.sig ? best.q.el.querySelector('text')?.textContent || '손님' : '손님'}님 안아주기 🤗`;
+    const best = net ? nearestHug() : null;
+    const label = !best ? '' : hugging ? (hugTarget ? '달려가는 중…' : '꼭 안는 중 🤗') : best.zombie ? `${best.name} 좀비 안아서 구하기 🧟` : `${best.q.sig ? best.q.el.querySelector('text')?.textContent || '손님' : '손님'}님 안아주기 🤗`;
     if (label === hugShown) return;
     hugShown = label; hugBtn.hidden = !best; hugBtn.textContent = label; hugBtn.disabled = hugging;
   }
   hugBtn.addEventListener('click', () => {
-    const best = nearestPeer(HUG_RANGE);
+    const best = nearestHug();
     if (!best || hugging || Date.now() < hugReady) return;
     hugReady = Date.now() + 2500; hint.done();
-    const side = best.q.x < pos.x ? 1 : -1; // 상대의 내 쪽 옆에 선다
+    const side = best.x < pos.x ? 1 : -1; // 상대의 내 쪽 옆에 선다
     hugging = true;
-    if (best.d < 46) { doHug({ uid: best.uid }); return; }
-    walkTo([best.q.x + side * 30, best.q.y], null, true);
-    hugTarget = { uid: best.uid };
+    const t = best.zombie ? { zombie: best.zombie } : { uid: best.uid };
+    if (best.d < 46) { doHug(t); return; }
+    walkTo([best.x + side * 30, best.y], null, true);
+    hugTarget = t;
   });
   // 다른 손님이 누군가를 안아 줬을 때
   function onPeerHug(uid, q, d) {
@@ -729,19 +731,103 @@
     else if (other) hugChar(other.el, q.x < other.x);
   }
 
+  /* ───── 좀비 집: 하트가 가장 적은 집 3곳이 좀비 바이러스에 걸린다 ─────
+     화면에는 "감염된 집"으로만 보이고 왜 걸렸는지는 나오지 않는다. 집주인은 좀비가 되어 집 앞에서 비틀거린다.
+     서로 다른 손님 5명이 하트를 주거나 좀비를 안아 주면 사람으로 돌아오고, 7일 동안은 다시 걸리지 않는다.
+     구조가 시작된 집(1-4명)은 끝까지 좀비로 남아 있어, 다 구할 때까지 바뀌지 않는다.
+     모두가 같은 하트·구조 기록을 보고 같은 규칙으로 고르므로 누구 화면에서나 같은 집이 좀비다. */
+  const ZOMBIES = 3, CURE_NEED = 5, IMMUNE = 7 * 864e5, ZX = 66, ZY = 30;
+  let cures = {}, cureLoaded = false;
+  const zombieEls = new Map();
+  let zombieKeys = new Set();
+  const shortName = (r) => String(r.sign || r.name).replace(/[<&>"]/g, '').slice(0, 6);
+  const curesOf = (key) => { const now = Date.now(); return Object.entries(cures[key] || {}).filter(([, v]) => v && typeof v.t === 'number' && now - v.t < IMMUNE).map(([u, v]) => ({ u, n: String(v.n || '손님'), t: v.t })).sort((a, b) => a.t - b.t); };
+  function pickZombies() {
+    const cand = lots.filter((l) => l.r && !l.r.noHeart && l.r.house !== 'mimo' && l.r.house !== 'temple')
+      .map((l) => { const k = keyOf(l.r); return { l, k, c: curesOf(k).length, h: hearts[k] || 0 }; })
+      .filter((x) => x.c < CURE_NEED);
+    cand.sort((a, b) => (b.c > 0) - (a.c > 0) || a.h - b.h || (a.k < b.k ? -1 : 1));
+    return cand.slice(0, ZOMBIES);
+  }
+  function zombieNote(key) {
+    const c = curesOf(key);
+    if (zombieKeys.has(key)) return `🧟 좀비 바이러스에 걸렸어요 · 구조 ${c.length}/${CURE_NEED} · 하트를 주거나 좀비를 안아 주면 구할 수 있어요`;
+    if (c.length >= CURE_NEED) return `🎉 ${c[CURE_NEED - 1].n}님 외 ${c.length - 1}명이 구했어요`;
+    return '';
+  }
+  function celebrate(l) {
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('transform', `translate(${l.x} ${l.y - 90})`); g.setAttribute('class', 'confetti'); g.setAttribute('pointer-events', 'none');
+    g.innerHTML = Array.from({ length: 18 }, (_, i) => { const a = (i / 18) * Math.PI * 2, r = 70 + (i % 3) * 30; return `<circle r="${5 + (i % 3)}" fill="${['#ff6f91', '#ffd24a', '#7fd0ea', '#8fdc9a', '#b8a5e3'][i % 5]}" style="--dx:${(Math.cos(a) * r).toFixed(0)}px;--dy:${(Math.sin(a) * r - 40).toFixed(0)}px"/>`; }).join('');
+    ballsG.appendChild(g); setTimeout(() => g.remove(), 1600);
+  }
+  function showZombies() {
+    if (!net || !cureLoaded) return;
+    const picked = pickZombies(), next = new Set(picked.map((x) => x.k));
+    // 사람으로 돌아온 집
+    zombieEls.forEach((z, k) => {
+      if (next.has(k)) return;
+      z.house.remove(); z.npc.remove(); zombieEls.delete(k);
+      if (curesOf(k).length >= CURE_NEED) { celebrate(z.l); toast(`${z.l.r.name} 사람으로 돌아왔어요! 🎉`); }
+    });
+    picked.forEach(({ l, k }) => {
+      if (zombieEls.has(k)) return;
+      const house = document.createElementNS(NS, 'g'); house.setAttribute('pointer-events', 'none');
+      house.innerHTML = window.TOWN_ART.zombieHouse(l.w);
+      thingOf(l).appendChild(house);
+      const npc = document.createElementNS(NS, 'g'); npc.setAttribute('class', 'npc'); npc.setAttribute('pointer-events', 'none');
+      npc.innerHTML = window.TOWN_ART.zombie(l.r.color, `${shortName(l.r)} 좀비`);
+      npc.setAttribute('transform', `translate(${l.x + ZX} ${l.y + ZY})`);
+      thingsG.insertBefore(npc, thingOf(l).nextSibling);
+      zombieEls.set(k, { l, house, npc });
+    });
+    zombieKeys = next;
+  }
+  // 하트를 주거나 좀비를 안아 주면 구조에 참여한다(손님마다 한 번 센다)
+  async function cureHouse(l) {
+    if (!net || !l || !l.r) return;
+    const k = keyOf(l.r);
+    if (!zombieKeys.has(k)) return;
+    if (curesOf(k).some((c) => c.u === net.uid)) { toast('이미 이 좀비를 구하는 데 함께했어요'); return; }
+    const res = await net.cure(k, myName);
+    if (res === 'ok') { const n = curesOf(k).length; if (n < CURE_NEED) toast(`🧟 구조 ${n}/${CURE_NEED}! 조금만 더`); }
+  }
+  function hugZombie(k) {
+    const z = zombieEls.get(k);
+    if (!z) { hugging = false; return; }
+    faceLeft = z.l.x + ZX < pos.x;
+    hugAt = Date.now(); hugTo = 'z:' + k; tellSoon = true;
+    hugChar(me, faceLeft); hugChar(z.npc, false);
+    cureHouse(z.l);
+    setTimeout(() => { hugging = false; }, 1800);
+  }
+  // 안아 줄 수 있는 가장 가까운 대상: 손님이나 좀비
+  function nearestHug() {
+    let best = null;
+    const p = nearestPeer(HUG_RANGE);
+    if (p) best = { uid: p.uid, q: p.q, x: p.q.x, y: p.q.y, d: p.d };
+    zombieEls.forEach((z, k) => {
+      const x = z.l.x + ZX, y = z.l.y + ZY, dd = Math.hypot(x - pos.x, y - pos.y);
+      if (dd < HUG_RANGE && (!best || dd < best.d)) best = { zombie: k, name: shortName(z.l.r), x, y, d: dd };
+    });
+    return best;
+  }
+  setInterval(showZombies, 60000);
+
   enter(myName);
   if (!store.get('town-name') && !new URLSearchParams(location.search).has('skip')) gate.showModal();
   window.TownNet.connect().then((n) => {
     if (!n) return;
     net = n; tellSoon = true; showOnline();
     net.onPeers(onPeer);
-    net.onHearts((h) => { hearts = h; showPerks(); showHearts(); });
+    net.onHearts((h) => { hearts = h; showPerks(); showHearts(); showZombies(); });
+    net.onCures((c) => { cures = c || {}; cureLoaded = true; showZombies(); showHearts(); });
     net.onWarm((w) => { warm = w || {}; showWarm(); });
     net.onVisits((v) => { visits = v || {}; showHearts(); });
     net.onSnowmen((s) => { snowmen = s || {}; showSnowmen(); showHearts(); });
     showBuild();
   });
 
-  window.__town = { pos, lots, walkTo, route, cam, setOverview, setNight, nodes, peers, get net() { return net; }, get hearts() { return hearts; }, get warm() { return warm; }, showWarm };
+  window.__town = { pos, lots, walkTo, route, cam, setOverview, setNight, nodes, peers, get net() { return net; }, get hearts() { return hearts; }, get warm() { return warm; }, showWarm, get zombies() { return [...zombieKeys]; } };
   requestAnimationFrame(tick);
 })();

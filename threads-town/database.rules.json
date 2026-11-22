@@ -142,6 +142,24 @@
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.isNumber() && newData.val() * 86400000 <= now + 32400000 && now + 32400000 < (newData.val() + 1) * 86400000 && newData.val() !== data.val()"
       }
+    },
+    "cure": {
+      ".read": true,
+      "$house": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && newData.exists()",
+          ".validate": "root.child('houses').child($house).exists() && newData.hasChildren(['t', 'n'])",
+          "t": {
+            ".validate": "newData.val() === now"
+          },
+          "n": {
+            ".validate": "newData.isString() && newData.val().length <= 8"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
     }
   }
 }

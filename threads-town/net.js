@@ -11,6 +11,8 @@
 //   net.giveHeart(key) -> 'ok' | 'cooldown' | 'error'   (warm/집열쇠 에 마지막 하트 시각도 남긴다)
 //   net.heartsLeft() -> 오늘 더 줄 수 있는 하트 수 (하루 DAILY_HEARTS개, 한국 날짜 기준)
 //   net.builtToday() -> 오늘 눈사람을 이미 만들었는지 (하루 한 개)
+//   net.onCures(fn)  fn({ 집열쇠: { 손님: { t: 시각, n: 이름 } } })   좀비 집을 구한 기록
+//   net.cure(key, name) -> 'ok' | 'error'   이 집 구조에 참여(하트를 주거나 좀비를 안아 줄 때)
 //   net.onWarm(fn)    fn({ 집열쇠: 마지막으로 하트를 받은 시각 })
 //   net.visit(key) -> 'ok' | 'already' | 'error'   오늘(한국 날짜) 이 집에 들른 손님 수를 1 올린다. 기기마다 하루 한 번.
 //   net.onVisits(fn)  fn({ 집열쇠: 오늘 다녀간 손님 수 })   날짜가 바뀌면 새 날짜로 다시 듣는다
@@ -70,6 +72,8 @@
       },
       heartsLeft: () => DAILY_HEARTS - (daily.d === dayNo() ? daily.n : 0),
       builtToday: () => built === dayNo(),
+      onCures(fn) { db.ref('cure').on('value', (s) => fn(s.val() || {})); },
+      async cure(key, name) { try { await db.ref(`cure/${key}/${uid}`).set({ t: SV.TIMESTAMP, n: String(name).slice(0, 8) }); return 'ok'; } catch (e) { return 'error'; } },
       onWarm(fn) { db.ref('warm').on('value', (s) => fn(s.val() || {})); },
       async visit(key) {
         const day = today();
@@ -111,9 +115,9 @@
     // 바뀐 값을 알림에 같이 실어 보낸다(다른 창의 저장소가 늦게 맞춰져도 같은 값을 보도록)
     const send = (sets) => ch.postMessage({ type: 'h', sets });
     const write = (k, v) => { localStorage.setItem(k, JSON.stringify(v)); send([[k, JSON.stringify(v)]]); refresh(); };
-    const warmFn = [], visitFn = [], snowFn = [], seen = {};
+    const warmFn = [], visitFn = [], snowFn = [], cureFn = [], seen = {};
     let daily = { d: 0, n: 0 }, built = 0;
-    const refresh = () => { warmFn.forEach((fn) => fn(read('town-mock-warm'))); visitFn.forEach((fn) => fn(read('town-mock-visits-' + today()))); snowFn.forEach((fn) => fn(read('town-mock-snowmen'))); };
+    const refresh = () => { warmFn.forEach((fn) => fn(read('town-mock-warm'))); visitFn.forEach((fn) => fn(read('town-mock-visits-' + today()))); snowFn.forEach((fn) => fn(read('town-mock-snowmen'))); cureFn.forEach((fn) => fn(read('town-mock-cure'))); };
     let mine = null;
     ch.onmessage = ({ data }) => {
       if (data.type === 'p' && data.uid !== uid) peersFn.forEach((fn) => fn(data.uid, data.p));
@@ -141,6 +145,8 @@
       },
       heartsLeft: () => DAILY_HEARTS - (daily.d === dayNo() ? daily.n : 0),
       builtToday: () => built === dayNo(),
+      onCures(fn) { cureFn.push(fn); fn(read('town-mock-cure')); },
+      async cure(key, name) { const c = read('town-mock-cure'); c[key] = c[key] || {}; c[key][uid] = { t: Date.now(), n: String(name).slice(0, 8) }; write('town-mock-cure', c); return 'ok'; },
       onWarm(fn) { warmFn.push(fn); fn(read('town-mock-warm')); },
       async visit(key) {
         if (seen[key] === today()) return 'already';

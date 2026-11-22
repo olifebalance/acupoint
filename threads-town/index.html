@@ -28,6 +28,12 @@
   @keyframes hugarm{0%,100%{transform:rotate(0)}15%,85%{transform:rotate(-115deg)}}
   @keyframes hugbody{0%,100%{translate:0 0}15%,85%{translate:5px -2px}40%{translate:6px -4px}60%{translate:5px -1px}}
   #hug{background:#ffe3ec}
+  .zombie .zbody{animation:zsway 1.6s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 100%}
+  @keyframes zsway{from{transform:rotate(-5deg)}to{transform:rotate(6deg)}}
+  .zfog ellipse{animation:zfog 3s ease-in-out infinite alternate}
+  @keyframes zfog{from{opacity:.25}to{opacity:.55}}
+  .confetti circle{animation:conf 1.4s ease-out forwards}
+  @keyframes conf{from{transform:translate(0,0);opacity:1}to{transform:translate(var(--dx),var(--dy));opacity:0}}
   #hug[hidden]{display:none}
   @keyframes wave{from{transform:rotate(-140deg) scale(1.2,1.45)}to{transform:rotate(-215deg) scale(1.2,1.45)}}
   .puff .h{transform-box:fill-box;transform-origin:50% 50%;opacity:0;animation:puff 1.5s ease-out both}
@@ -112,7 +118,7 @@
   .colors input:checked+span{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--ink)}
   .colors input:focus-visible+span{outline:3px solid var(--hot);outline-offset:6px}
   .fine{margin:12px 0 0;font-size:12px;opacity:.7}
-  @media (prefers-reduced-motion:reduce){#hint{transition:none}.tw{animation:none}#leaves,#snow{display:none}.smoke circle{animation:none;opacity:.6}}
+  @media (prefers-reduced-motion:reduce){#hint{transition:none}.tw{animation:none}#leaves,#snow{display:none}.smoke circle{animation:none;opacity:.6}.zombie .zbody,.zfog ellipse{animation:none}}
 </style>
 </head>
 <body>
@@ -129,7 +135,7 @@
 </header>
 
 <div class="dock">
-  <p id="snowtag" hidden>❄ 마을에 눈이 와요 · 밤 10시까지</p>
+  <p id="snowtag" hidden>❄ 함박눈이 와요 · 밤 10시까지</p>
   <p id="toast" role="status" hidden></p>
   <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button><button class="chip" id="throw" hidden>눈 던지기</button><button class="chip" id="build" hidden>눈사람 만들기</button><button class="chip" id="hug" hidden>안아주기</button></div>
   <p id="hint">가고 싶은 집을 누르면 걸어가요<span class="pc"> · 방향키로도 움직여요</span></p>
@@ -159,15 +165,15 @@
     <p class="f" style="margin:16px 0 8px;font-size:14px;font-weight:800">옷 색</p>
     <div class="colors" id="g-colors"></div>
     <button class="go" type="submit">마을 들어가기</button>
-    <p class="fine">매일 밤 9시부터 10시까지 마을에 눈이 와요.</p>
+    <p class="fine">겨울 마을이에요. 걸으면 눈덩이가 모이고, 밤 9시부터 10시에는 함박눈이 내려요.</p>
     <p class="fine">로그인은 없어요. 닉네임과 모습, 출석은 이 기기에만 저장돼요.</p>
     <p class="fine">이 사이트는 Meta, Threads와 관련이 없습니다.</p>
   </form>
 </dialog>
 
-<script src="residents.js?v=13"></script>
-<script src="houses.js?v=13"></script>
-<script src="net.js?v=13"></script>
-<script src="town.js?v=13"></script>
+<script src="residents.js?v=14"></script>
+<script src="houses.js?v=14"></script>
+<script src="net.js?v=14"></script>
+<script src="town.js?v=14"></script>
 </body>
 </html>

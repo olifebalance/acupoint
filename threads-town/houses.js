@@ -367,5 +367,26 @@
     + C(0, -45, 1.8, '#2f3a4f') + C(0, -38, 1.8, '#2f3a4f')
     + P('M-9 -72 h18 l-2 -12 h-14Z', '#2f3a4f') + R(-12, -74, 24, 4, '#2f3a4f', 2);
 
-  window.TOWN_ART = { HOUSES, DECOR, lightsOf, perks, perkLights, smoke, snowman };
+  /** 좀비가 된 집주인: 초록 얼굴, 팔을 앞으로 뻗고 비틀거린다(.zombie). c 옷 색 */
+  const zombie = (c = '#6b7f5a', name = '') => `<g class="zombie">`
+    + E(0, 2, 15, 5, 'rgba(60,50,30,.22)')
+    + R(-9, -13, 7, 14, '#3d4650', 3) + R(2, -13, 7, 14, '#3d4650', 3)
+    + `<g class="zbody">` + R(-13, -38, 26, 28, c, 10) + P('M-13 -18 l5 6 l4 -6 l5 6 l4 -6 l5 6 l3 -4 v6 h-26Z', mixTo(c, [255, 255, 255], 0.25))
+    + R(4, -36, 26, 7, c, 3.5) + R(4, -26, 24, 7, c, 3.5) + C(31, -32.5, 4, '#9fc98a') + C(29, -22.5, 4, '#9fc98a')
+    + C(0, -48, 13, '#9fc98a') + P('M-13 -51 q4 -14 13 -13 q11 -1 13 11 l-4 -3 l-3 4 l-3 -5 l-4 4 l-3 -5 l-3 4 l-3 -4Z', '#4a3728')
+    + L('M-7 -51 l4 4 M-3 -51 l-4 4 M3 -51 l4 4 M7 -51 l-4 4', '#2f3a4f', 1.8) + P('M-5 -41 q5 -3 10 0 q-5 3 -10 0Z', '#5b2a2a') + `</g>`
+    + (name ? `<g transform="translate(0 -74)"><rect x="${-(name.length * 7 + 12)}" y="-11" width="${name.length * 14 + 24}" height="22" rx="11" fill="#e3f2d7" stroke="#3f6a2e" stroke-width="2"/><text x="0" y="0.5" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="#2f4a22">${name}</text></g>` : '')
+    + `</g>`;
+  /** 좀비 바이러스에 걸린 집: 창에 판자, 초록 안개, 벽에 이끼 */
+  const zombieHouse = (w) => {
+    const h = w / 2;
+    return `<g class="zfog">${[-h + 10, -30, 30, h - 10].map((x, i) => E(x, -2, 46, 14, '#8fcf6a', `opacity=".45" style="animation-delay:${(i * 0.6).toFixed(1)}s"`)).join('')}</g>`
+      + R(-h - 4, -112, w + 8, 112, '#6fa84f', 6, 'opacity=".22"')
+      + `<g transform="rotate(-12 -40 -48)">${R(-84, -54, 92, 10, '#8a6a48', 2)}</g><g transform="rotate(14 -40 -40)">${R(-84, -44, 92, 10, '#7a5a3a', 2)}</g>`
+      + C(-60, -50, 2, '#3d2a1c') + C(4, -44, 2, '#3d2a1c')
+      + [[-h + 6, -96], [h - 12, -70], [-h + 18, -20]].map(([x, y]) => C(x, y, 9, '#7fb35a', 'opacity=".75"') + C(x + 8, y + 4, 6, '#6aa14a', 'opacity=".75"')).join('')
+      + `<g transform="translate(${-h + 4} -150)">${R(-28, -13, 92, 26, '#e3f2d7', 8, 'stroke="#3f6a2e" stroke-width="2"')}${T(18, 0, '🧟 감염', '#2f4a22', 13)}</g>`;
+  };
+
+  window.TOWN_ART = { HOUSES, DECOR, lightsOf, perks, perkLights, smoke, snowman, zombie, zombieHouse };
 })();
