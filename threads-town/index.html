@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>스친 마을</title>
 <meta name="description" content="스친들의 가게가 모인 마을. 걸어 다니며 가게에 들르면 주인의 소개를 보고 스레드로 놀러 갈 수 있어요.">
-<meta name="theme-color" content="#e6dcb6">
+<meta name="theme-color" content="#dce8f4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="스친 마을">
 <style>
   @font-face{font-family:Pretendard;src:url(fonts/pretendard-subset.woff2) format("woff2");font-weight:100 900;font-display:swap}
   :root{color-scheme:light;--ink:#3d4650;--paper:#fffdf6;--hot:#ff7a59;--grass:#e6dcb6}
@@ -28,6 +34,10 @@
   @keyframes hugarm{0%,100%{transform:rotate(0)}15%,85%{transform:rotate(-115deg)}}
   @keyframes hugbody{0%,100%{translate:0 0}15%,85%{translate:5px -2px}40%{translate:6px -4px}60%{translate:5px -1px}}
   #hug{background:#ffe3ec}
+  #install{display:flex;align-items:center;gap:4px;margin:0;padding:4px 4px 4px 6px;border-radius:999px;background:#fff;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink)}
+  #install[hidden]{display:none}
+  #install button{border:0;background:none;font:inherit;font-size:14px;font-weight:800;color:var(--ink);cursor:pointer;padding:6px 8px}
+  #install-x{font-size:18px!important;opacity:.6}
   .zombie .zbody{animation:zsway 1.6s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:50% 100%}
   @keyframes zsway{from{transform:rotate(-5deg)}to{transform:rotate(6deg)}}
   .zfog ellipse{animation:zfog 3s ease-in-out infinite alternate}
@@ -135,11 +145,22 @@
 </header>
 
 <div class="dock">
+  <p id="install" hidden><button type="button" id="install-go">📲 홈 화면에 마을 추가</button><button type="button" id="install-x" aria-label="닫기">×</button></p>
   <p id="snowtag" hidden>❄ 함박눈이 와요 · 밤 10시까지</p>
   <p id="toast" role="status" hidden></p>
   <div class="acts"><button id="visit" hidden></button><button class="chip" id="wave">손 흔들기</button><button class="chip" id="throw" hidden>눈 던지기</button><button class="chip" id="build" hidden>눈사람 만들기</button><button class="chip" id="hug" hidden>안아주기</button></div>
   <p id="hint">가고 싶은 집을 누르면 걸어가요<span class="pc"> · 방향키로도 움직여요</span></p>
 </div>
+
+<dialog id="guide" aria-labelledby="gd-title">
+  <div class="sheet">
+    <button class="x" id="gd-close" aria-label="닫기">×</button>
+    <p class="addr">앱처럼 쓰기</p>
+    <h2 id="gd-title">홈 화면에 마을 추가</h2>
+    <p class="intro" id="gd-text"></p>
+    <a class="go" id="gd-chrome" hidden>크롬으로 열기</a>
+  </div>
+</dialog>
 
 <dialog id="card" aria-labelledby="c-name">
   <div class="sheet">
@@ -171,9 +192,9 @@
   </form>
 </dialog>
 
-<script src="residents.js?v=14"></script>
-<script src="houses.js?v=14"></script>
-<script src="net.js?v=14"></script>
-<script src="town.js?v=14"></script>
+<script src="residents.js?v=15"></script>
+<script src="houses.js?v=15"></script>
+<script src="net.js?v=15"></script>
+<script src="town.js?v=15"></script>
 </body>
 </html>

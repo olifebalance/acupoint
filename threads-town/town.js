@@ -814,6 +814,43 @@
   }
   setInterval(showZombies, 60000);
 
+  /* ───── 홈 화면에 마을 추가: 앱처럼 아이콘을 눌러 바로 들어오게 ─────
+     안드로이드 크롬은 설치 창을 바로 띄우고, 아이폰 사파리는 순서를 보여 준다.
+     스레드·인스타·카카오톡 안에서 열면 추가가 막혀 있어서, 브라우저로 여는 방법을 알려 준다. */
+  const installEl = $('#install'), guideEl = $('#guide'), guideText = $('#gd-text'), guideChrome = $('#gd-chrome');
+  const UA = navigator.userAgent;
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const inApp = /Barcelona|Instagram|FBAN|FBAV|KAKAOTALK|NAVER|Line\//i.test(UA);
+  const iOS = /iPhone|iPad|iPod/i.test(UA) || (/Macintosh/.test(UA) && navigator.maxTouchPoints > 1);
+  const android = /Android/i.test(UA);
+  const ownSite = /\.web\.app$|^localhost$|^127\./.test(location.hostname);
+  let installPrompt = null;
+  if ('serviceWorker' in navigator && ownSite) navigator.serviceWorker.register('sw.js').catch(() => {});
+  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installPrompt = e; showInstall(); });
+  addEventListener('appinstalled', () => { store.set('town-installed', '1'); installEl.hidden = true; toast('홈 화면에 스친 마을이 생겼어요 🏡'); });
+  function showInstall() { installEl.hidden = !ownSite || standalone || store.get('town-installed') === '1' || store.get('town-install-x') === new Date().toISOString().slice(0, 10); }
+  showInstall();
+  $('#install-x').addEventListener('click', () => { store.set('town-install-x', new Date().toISOString().slice(0, 10)); installEl.hidden = true; }); // 닫으면 오늘 하루만 숨긴다
+  $('#gd-close').addEventListener('click', () => guideEl.close());
+  $('#install-go').addEventListener('click', async () => {
+    guideChrome.hidden = true;
+    if (installPrompt) { installPrompt.prompt(); const r = await installPrompt.userChoice.catch(() => null); installPrompt = null; if (r && r.outcome === 'accepted') store.set('town-installed', '1'); showInstall(); return; }
+    if (inApp && android) {
+      guideText.textContent = '스레드 안에서는 홈 화면에 추가할 수 없어요.\n아래 "크롬으로 열기"를 누르거나, 오른쪽 위 ⋯ 를 눌러 "브라우저에서 열기"를 고른 다음\n크롬 메뉴 ⋮ 에서 "홈 화면에 추가"를 눌러 주세요.';
+      guideChrome.href = `intent://${location.host}/#Intent;scheme=https;package=com.android.chrome;end`;
+      guideChrome.hidden = false;
+    } else if (inApp) {
+      guideText.textContent = '스레드 안에서는 홈 화면에 추가할 수 없어요.\n1. 오른쪽 위 ⋯ 를 눌러 "브라우저에서 열기"(사파리)를 골라요.\n2. 사파리 아래쪽 공유 버튼(□↑)을 눌러요.\n3. "홈 화면에 추가"를 누르면 끝!';
+    } else if (iOS) {
+      guideText.textContent = '1. 아래쪽 공유 버튼(□↑)을 눌러요.\n2. 목록을 내려서 "홈 화면에 추가"를 눌러요.\n3. 오른쪽 위 "추가"를 누르면 끝!';
+    } else if (android) {
+      guideText.textContent = '1. 오른쪽 위 메뉴 ⋮ 를 눌러요.\n2. "홈 화면에 추가" 또는 "앱 설치"를 눌러요.';
+    } else {
+      guideText.textContent = '휴대폰으로 이 주소를 열면 홈 화면에 마을을 추가할 수 있어요.\n컴퓨터에서는 주소창 오른쪽의 설치 아이콘이나 브라우저 메뉴의 "앱 설치"를 눌러 주세요.';
+    }
+    guideEl.showModal();
+  });
+
   enter(myName);
   if (!store.get('town-name') && !new URLSearchParams(location.search).has('skip')) gate.showModal();
   window.TownNet.connect().then((n) => {
