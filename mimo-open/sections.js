@@ -85,7 +85,24 @@ function onScroll() {
   if (nowIn !== inView) { inView = nowIn; syncWorks(); }
   setActive(Math.round(f));
 }
-const req = () => { if (!wraf) wraf = requestAnimationFrame(onScroll); };
+// 스크롤이 작품과 작품 사이에서 멈추면 한 작품에 딱 맞게 옮긴다
+let snapT = 0, touching = false, dir = 0, lastY = scrollY;
+function snap() {
+  if (touching) return;
+  const r = works.getBoundingClientRect(), vh = innerHeight;
+  if (r.top > 0 || r.bottom < vh) return;                 // 작품 화면이 고정되어 있는 동안만
+  const per = (r.height - vh) / (N - 1), f = -r.top / per, part = f - Math.floor(f);
+  // 조금만 넘겨도 넘기려던 쪽으로 간다
+  const to = dir > 0 && part > 0.14 ? Math.ceil(f) : dir < 0 && part < 0.86 ? Math.floor(f) : Math.round(f);
+  if (Math.abs(f - to) > 0.01) scrollTo({ top: scrollY + r.top + to * per, behavior: reduce ? 'auto' : 'smooth' });
+}
+addEventListener('touchstart', () => { touching = true; clearTimeout(snapT); }, { passive: true });
+addEventListener('touchend', () => { touching = false; clearTimeout(snapT); snapT = setTimeout(snap, 140); }, { passive: true });
+const req = () => {
+  dir = Math.sign(scrollY - lastY) || dir; lastY = scrollY;
+  if (!wraf) wraf = requestAnimationFrame(onScroll);
+  clearTimeout(snapT); snapT = setTimeout(snap, 140);
+};
 addEventListener('scroll', req, { passive: true });
 addEventListener('resize', req);
 onScroll();
@@ -116,19 +133,63 @@ function showSheet(k) {
 document.querySelectorAll('.est-tab').forEach(t => t.addEventListener('click', () => showSheet(t.dataset.k)));
 showSheet('film');
 
-/* ───── 미모 소개 ───── */
-const mv = $('mimoVideo');
+/* ───── 미모 소개: 이음의 현재 사이트와 같은 순서. 인사 → 질문 → 손짓(손끝에서 케이크 영상) ───── */
+const film = $('mimoFilm'), mv = $('mimoVideo'), cake = $('cake'), cv = $('cakeVideo'), cap = $('mimoCap'), offer = $('mimoOffer');
 const clip = n => `assets/mimo/mimo-${n}.mp4`;
-function idle() { mv.loop = true; mv.src = clip('idle'); start(mv, false); }
+const STEPS = [
+  { clip: 'welcome', cap: 'Welcome.', lead: 1.5, voice: true },                 // lead: 목소리가 시작되는 지점으로 건너뛴다
+  { clip: 'question', cap: 'What can I do for you?', lead: 0.9, voice: true },
+  { clip: 'hand', cap: '', lead: 0, voice: false },
+];
+const HAND_CONTACT = 2.0, HAND_PLAY = 2.65;   // 손끝이 닿는 시각, 케이크가 재생되는 시각(초)
+let step = 0, now = 'idle', seen = false, hraf = 0;
+
+function stopCake() { cancelAnimationFrame(hraf); cv.pause(); cake.hidden = true; cake.classList.remove('is-on'); }
+function idle() {
+  now = 'idle'; cap.textContent = '';
+  mv.loop = true; mv.src = clip('idle'); start(mv, false);
+}
+function act(i) {
+  const st = STEPS[i]; step = (i + 1) % STEPS.length; now = st.clip;
+  stopCake(); offer.classList.remove('is-on'); cap.textContent = st.cap;
+  mv.loop = false; mv.src = clip(st.clip);
+  if (st.lead) mv.addEventListener('loadedmetadata', () => { try { mv.currentTime = st.lead; } catch (e) {} }, { once: true });
+  start(mv, st.voice && !muted);
+  if (st.clip === 'hand') { load(cv, 'assets/mimo/cake.mp4'); watchHand(); }
+}
+function watchHand() {                      // 손끝이 닿으면 창이 열리고, 이어서 케이크 영상이 나온다
+  cancelAnimationFrame(hraf);
+  const tick = () => {
+    if (now !== 'hand') return;
+    if (mv.currentTime >= HAND_CONTACT && cake.hidden) { cake.hidden = false; void cake.offsetWidth; cake.classList.add('is-on'); }
+    if (mv.currentTime >= HAND_PLAY) {
+      mv.pause();                           // 케이크가 나오는 동안 미모는 손짓한 채로 멈춘다(한 번에 영상 하나)
+      const go = () => {
+        if (now !== 'hand') return;
+        if (!cv.currentSrc) { hraf = requestAnimationFrame(go); return; }   // 케이크 영상을 아직 받는 중이면 기다린다
+        try { cv.currentTime = 0; } catch (e) {}
+        start(cv, !muted);
+      };
+      go();
+      return;
+    }
+    hraf = requestAnimationFrame(tick);
+  };
+  hraf = requestAnimationFrame(tick);
+}
+mv.addEventListener('ended', () => {
+  if (now === 'question') offer.classList.add('is-on');
+  if (now === 'hand') return;               // 손짓은 케이크가 끝난 뒤에 돌아간다
+  idle();
+});
+cv.addEventListener('ended', () => { stopCake(); idle(); });
+cv.addEventListener('error', () => { if (!cv.src.startsWith('blob:') && now === 'hand') { stopCake(); idle(); } });
+$('mimoTouch').addEventListener('click', () => act(step));
+document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => act(+b.dataset.step)));
 new IntersectionObserver(es => {
-  if (es[0].isIntersecting) { if (!mv.currentSrc) idle(); else if (mv.paused) start(mv, mv.loop ? false : !mv.muted); }
-  else mv.pause();
-}, { threshold: 0.3 }).observe(mv);
-document.querySelectorAll('[data-clip]').forEach(b => b.addEventListener('click', () => {
-  mv.loop = false; mv.src = clip(b.dataset.clip);
-  start(mv, b.dataset.clip === 'welcome');       // 인사만 목소리가 있다
-}));
-mv.addEventListener('ended', idle);
+  if (es[0].isIntersecting) { if (!seen) { seen = true; idle(); load(cv, 'assets/mimo/cake.mp4'); } else if (now === 'idle' && mv.paused) start(mv, false); }
+  else { mv.pause(); cv.pause(); }
+}, { threshold: 0.3 }).observe(film);
 
 /* ───── 문의: 내용을 정리하고 복사만 한다. 보내지 않는다 ───── */
 const ask = $('ask'), out = $('askOut'), text = $('askText');

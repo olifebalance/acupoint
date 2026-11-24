@@ -141,12 +141,19 @@
 
 <!-- ───── 미모 소개 ───── -->
 <section class="sec about" id="about" aria-labelledby="about-h">
-  <div class="about-film">
+  <div class="about-film" id="mimoFilm">
     <video id="mimoVideo" poster="assets/mimo/mimo-idle.jpg" playsinline muted loop preload="none"></video>
+    <!-- 미모의 손끝에서 열리는 케이크 영상 -->
+    <div class="cake" id="cake" hidden>
+      <video id="cakeVideo" poster="assets/mimo/cake.jpg" playsinline preload="none" aria-label="손끝에서 시작되는 한 장면. 디저트 창작 콘셉트"></video>
+    </div>
+    <button class="mimo-touch" id="mimoTouch" type="button" aria-label="미모 누르기. 누를 때마다 인사, 질문, 손짓 순서로 움직입니다"></button>
+    <p class="mimo-cap" id="mimoCap" role="status" aria-live="polite"></p>
+    <p class="mimo-offer" id="mimoOffer" aria-hidden="true"><span>광고 영상</span><span>상세페이지</span><span>스토어 사진</span><span>메뉴판</span></p>
     <div class="about-btns">
-      <button class="chip" type="button" data-clip="welcome">인사 듣기</button>
-      <button class="chip" type="button" data-clip="hand">손짓</button>
-      <button class="chip" type="button" data-clip="smile">미소</button>
+      <button class="chip" type="button" data-step="0">인사</button>
+      <button class="chip" type="button" data-step="1">질문</button>
+      <button class="chip" type="button" data-step="2">손짓</button>
     </div>
   </div>
   <div class="sec-head">

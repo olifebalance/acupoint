@@ -200,6 +200,17 @@ html.open .top{padding-bottom:30px;background:linear-gradient(180deg,rgba(14,21,
 .about-film{position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:16/9;max-width:100%}
 .about-film video{width:100%;height:100%;object-fit:cover;display:block}
 .about-btns{position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:8px}
+@media (max-width:899px){.about-film{overflow:visible;margin-bottom:58px}.about-film>video{border-radius:10px}.about-btns{left:0;right:0;top:calc(100% + 12px);bottom:auto}}
+.mimo-touch{position:absolute;inset:0;background:none;border:0;padding:0;cursor:pointer}
+.about-btns{z-index:3}
+.cake{position:absolute;z-index:2;left:7%;top:43%;width:37%;aspect-ratio:16/9;border-radius:6px;overflow:hidden;background:#080e19;box-shadow:0 14px 30px rgba(0,0,0,.55);
+  opacity:0;scale:.6;transform-origin:80% 20%;transition:opacity .3s,scale .45s cubic-bezier(.16,1,.3,1);pointer-events:none}
+.cake.is-on{opacity:1;scale:1}
+.cake video{width:100%;height:100%;object-fit:cover;display:block}
+.mimo-cap{position:absolute;z-index:2;left:0;right:0;top:10%;margin:0;text-align:center;font-family:var(--logo);font-weight:800;font-size:clamp(15px,4.2vw,22px);text-shadow:0 2px 14px rgba(14,21,36,.9);pointer-events:none}
+.mimo-offer{position:absolute;z-index:2;left:6%;top:24%;margin:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start;opacity:0;transition:opacity .4s;pointer-events:none}
+.mimo-offer.is-on{opacity:1}
+.mimo-offer span{padding:5px 12px;border-radius:999px;background:var(--cream);color:var(--navy);font-weight:800;font-size:clamp(11px,3vw,14px)}
 @media (min-width:900px){.about{flex-direction:row;align-items:center;gap:48px}.about-film{flex:1.15}.about .sec-head{flex:1}.about .sec-head h2{font-size:clamp(28px,3.3vw,44px)}}
 
 /* ── 문의 ── */
