@@ -142,7 +142,7 @@
 
   svg.innerHTML = `<defs><linearGradient id="t-iris" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#57e3d0"/><stop offset=".5" stop-color="#8b7cf6"/><stop offset="1" stop-color="#ff7ab8"/></linearGradient><radialGradient id="t-glow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient></defs>`
     + `<g id="ground">${ground}</g><g id="snowground" opacity="0" pointer-events="none"><rect x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#c9d4e3" opacity=".62"/><path d="${roadPath}" fill="none" stroke="#ffffff" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/></g><g id="marker"></g><g id="things">${things.map((t) => t.html).join('')}</g>`
-    + `<g id="balls" pointer-events="none"></g><rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
+    + `<g id="snowmenG" pointer-events="none"></g><g id="balls" pointer-events="none"></g><rect id="dark" x="-3000" y="-3000" width="${W + 6000}" height="${H + 6000}" fill="#0d1746" opacity="0" pointer-events="none"/><g id="lights" opacity="0" pointer-events="none">${lights}</g>`;
   const thingsG = $('#things'), thingEls = [...thingsG.children];
   const lightEls = [...$('#lights').children];
   const shown = new Map(); // 화면 밖의 집과 불빛은 그리지 않는다
@@ -650,9 +650,10 @@
       g.setAttribute('pointer-events', 'none');
       const name = String(s.n || '손님').slice(0, 8).replace(/[<&>"]/g, ''), col = /^#[0-9a-f]{6}$/i.test(s.c) ? s.c : '#ff7a59';
       const label = `${name}님이 만든 눈사람`, lw = label.length * 10.5 + 14;
-      g.setAttribute('transform', `translate(${-l.w / 2 + 34} 16)`);
+      g.setAttribute('transform', `translate(${l.x - l.w / 2 + 34} ${l.y + 16})`);
       g.innerHTML = window.TOWN_ART.snowman(col) + `<g transform="translate(0 22)"><rect x="${-lw / 2}" y="-10" width="${lw}" height="20" rx="10" fill="#fff" stroke="#9fb0c8" stroke-width="1.5"/><text x="0" y="0.5" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="800" fill="#3d4650">${label}</text></g>`;
-      thingOf(l).appendChild(g);
+      // 집과 나무보다 위 칸에 세운다(아랫줄 나무나 가로등에 가려 누가 만들었는지 안 보이던 문제)
+      $('#snowmenG').appendChild(g);
       snowEls.set(l.slot, { g, sig });
     });
     showBuild();
