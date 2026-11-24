@@ -49,6 +49,7 @@ function layout() {
   stage.classList.toggle('wide', vw / vh > 0.72);
   stage.classList.toggle('roomy', (vw - fw) / 2 > 240);   // 영상 양옆에 큰 글자를 놓을 자리가 있는가
   stage.style.setProperty('--half', fw / 2 + 'px');
+  if (vw / vh > 0.72) { glow.width = 320; glow.height = Math.max(90, Math.round(320 * vh / vw)); }
   const u = fw / 480;
   place(sign, ox + SIGN.x * fw, oy + SIGN.y * fh, SIGN.w * fw, SIGN.h * fh);
   sign.style.fontSize = 13.5 * u + 'px';
@@ -215,7 +216,10 @@ function tick() {
   if (video.paused || video.ended) return;
   if (done && title.hidden && video.currentTime >= TITLE_AT) showTitle();
   word();
-  if (stage.classList.contains('wide')) gx.drawImage(video, 0, 0, glow.width, glow.height);
+  if (stage.classList.contains('wide') && video.videoWidth) {   // 넓은 화면: 같은 영상을 화면 가득 깔아 배경으로 쓴다
+    const sh = video.videoWidth * glow.height / glow.width;
+    gx.drawImage(video, 0, (video.videoHeight - sh) * 0.42, video.videoWidth, sh, 0, 0, glow.width, glow.height);
+  }
   requestAnimationFrame(tick);
 }
 video.addEventListener('play', () => requestAnimationFrame(tick));
