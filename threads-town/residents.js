@@ -160,4 +160,20 @@ window.RESIDENTS = [
     intro: '스레드에 잠시 쉬러 왔다가, 2년째 푹~ 눌러앉은 동네 아저씨야~♡ 만나서 반가워~' },
   { name: '영호랑 세상 살이 연구소', sign: '영호랑 등불친구', handle: 'young_ho_rang', color: '#1f4f86', color2: '#ffffff', roof: 'hip', props: ['lantern', 'leaf', 'wave'],
     intro: '세상을 지혜롭게 살아보려는 동반자분들 환영합니다~ (일상공감, 사유, 예술, 전략)' },
+
+  // ── 3기 (미모가 넘긴 「스친 마을 신규 입점 최종 명단 · 7명」 2026-11-24). 소개는 명단 문장 그대로.
+  { name: '부산맘', handle: 'busanmom', color: '#3f7fd1', color2: '#f2c230', roof: 'hip', props: ['gem', 'laptop', 'heart'],
+    intro: '모두 반가워, 네이버 카페 카페지기' },
+  { name: '비플랫', handle: 'bflat_atelier', color: '#7cc4ec', color2: '#b8a5e3', roof: 'gable', props: ['bag', 'brush', 'star'],
+    intro: '오래가는 가치 Leather craft' },
+  { name: '무무', handle: 'mumu_hug78', color: '#3f7fd1', color2: '#7cc4ec', roof: 'gable', props: ['note', 'pen', 'heart'],
+    intro: '글과 노래를 사랑하는 무무' },
+  { name: '바티', handle: 'bati_chan', color: '#2b2b2e', color2: '#d9443a', roof: 'flat', props: ['camera', 'bowl', 'heart'],
+    intro: '음식 좋아하는 마켓그래퍼' },
+  { name: '꿈꾸는 여행자', handle: 'ddw03158', color: '#4f9a55', color2: '#d9443a', roof: 'hip', props: ['globe', 'tree', 'house'],
+    intro: '누구든 편히 쉴 수 있는, 당신이 꿈꾸는 여행지' },
+  { name: '비비하우스', handle: 'with._.bibiy', color: '#f29ac0', color2: '#5fa36b', roof: 'gable', props: ['heart', 'flag', 'flower'],
+    intro: '꽂히면 무섭게 응원하는 HSP 프로서포터.\n비비의 응원을 받고 싶다면 놀러오세요~' },
+  { name: '낭만돌멩이', handle: 'nangmandolmeng222', color: '#2b2b2e', color2: '#8e6bd1', roof: 'flat', props: ['stone', 'gem', 'moon'],
+    intro: '그대의 낭만이 되어줄 특별한 돌멩이 상점♡' },
 ];
