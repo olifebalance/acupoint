@@ -147,7 +147,8 @@ html.open .top{padding-bottom:30px;background:linear-gradient(180deg,rgba(14,21,
 .works-bg{position:absolute;inset:-8%;background-size:cover;background-position:center;filter:blur(26px) brightness(.38) saturate(1.1);transition:background-image .4s;display:none}
 .works-stack,.work{position:absolute;inset:0}
 .work{background:var(--deep);will-change:clip-path}
-.work video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
+.work img,.work canvas,.work video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.works-tap{z-index:10;top:42%}
 .works-edge{position:absolute;left:0;right:0;top:-7px;height:7px;background:linear-gradient(180deg,#0b0f1a,#5b2a16);opacity:0;pointer-events:none;z-index:8;box-shadow:0 6px 18px rgba(0,0,0,.6)}
 .works-ui{position:absolute;z-index:9;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:6px;pointer-events:none;
   padding:70px var(--gut-r) calc(26px + env(safe-area-inset-bottom,0px)) var(--gut-l);
@@ -164,7 +165,7 @@ html.open .top{padding-bottom:30px;background:linear-gradient(180deg,rgba(14,21,
 @media (min-aspect-ratio:1/1) and (min-width:820px){          /* 넓은 화면: 세로 영상은 가운데, 제목은 왼쪽 아래 크게 */
   .works-bg{display:block}
   .work{background:transparent}
-  .work video{object-fit:contain;background:transparent}
+  .work img,.work canvas,.work video{object-fit:contain}
   .works-ui{right:auto;width:min(46vw,620px);padding-left:max(40px,var(--gut-l));padding-bottom:calc(44px + env(safe-area-inset-bottom,0px));background:none;text-shadow:0 2px 18px rgba(14,21,36,.7)}
   .works-title{font-size:clamp(40px,7.4vh,76px)}
 }

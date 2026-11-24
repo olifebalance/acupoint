@@ -41,9 +41,9 @@ fc.append("".join(labels) + f"concat=n={len(SEGS)}:v=1:a=0,format=yuv420p[v]")
 fc.append(f"[{m}:a]atrim=start={MUSIC_START}:duration={dur},asetpts=PTS-STARTPTS,afade=t=out:st={dur - 2.4}:d=2.4[m]")
 if sfx:
     fc.append(f"[{m + 1}:a]volume=0.45,apad=whole_dur={dur}[s]")
-    fc.append("[m][s]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=44100[a]")
+    fc.append("[m][s]amix=inputs=2:duration=first:normalize=0,loudnorm=I=-18:TP=-1.5:LRA=11,aresample=44100[a]")
 else:
-    fc.append("[m]loudnorm=I=-16:TP=-1.5:LRA=11,aresample=44100[a]")
+    fc.append("[m]loudnorm=I=-18:TP=-1.5:LRA=11,aresample=44100[a]")
 out = os.path.join(root, "assets", "showreel.mp4")
 subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", ";".join(fc), "-map", "[v]", "-map", "[a]",
                 "-c:v", "libx264", "-preset", "slow", "-crf", "22", "-g", "48", "-movflags", "+faststart",

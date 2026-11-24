@@ -191,6 +191,7 @@ function open() {
   done = true; cut = -1;
   cancelAnimationFrame(anim);
   play();
+  document.dispatchEvent(new Event('mimo:open'));   // 아래 화면의 영상도 이 동작 안에서 소리 허락을 받아 둔다
   top.hidden = false; say.hidden = false; syncSound();
   tween(1, 520 + 780 * (1 - p), enter);   // 무거운 셔터처럼 천천히 마저 올라간다
 }

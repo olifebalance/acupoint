@@ -23,7 +23,9 @@ function start(v, wantSound) {
   if (pr) pr.catch(() => { v.muted = true; v.play().catch(() => {}); });
 }
 
-/* ───── 작업물 ───── */
+/* ───── 작업물 ─────
+   영상 태그는 하나만 쓰고 작품이 바뀔 때 주소만 갈아 끼운다.
+   폰은 "누르는 동작으로 한 번 허락받은 영상 태그"에만 소리를 허락하기 때문에, 태그가 작품마다 따로면 소리가 났다 안 났다 한다. */
 // 작품을 바꾸려면 이 목록과 assets/works/ 의 파일을 바꾼다
 const WORKS = [
   { id: 'burger', title: '한입의 상상', cat: '음식 · 제품 광고', by: '버거스테이지' },
@@ -32,40 +34,77 @@ const WORKS = [
   { id: 'book', title: '책에서, 일상으로', cat: '협업 브랜드 · 도서 소개', by: '오라이프밸런스' },
   { id: 'wuxia', title: '상상이 장면이 될 때', cat: '무협 · 스토리 영상', by: '창작 콘셉트' },
 ];
-const works = $('works'), pin = $('worksPin'), stack = $('worksStack'), edge = $('worksEdge'), bg = $('worksBg');
+const works = $('works'), pin = $('worksPin'), stack = $('worksStack'), edge = $('worksEdge'), bg = $('worksBg'), tapSound = $('worksSound');
 const N = WORKS.length;
 works.style.setProperty('--n', N);
+const src = w => `assets/works/${w.id}.mp4`, still = w => `assets/works/${w.id}.webp`;
+const blobs = {};                                  // 통째로 받아 둔 작품(아이폰 대비)
+function fetchWork(i) {
+  const w = WORKS[i];
+  if (!w || w.asked) return;
+  w.asked = true;
+  fetch(src(w)).then(r => r.ok ? r.blob() : Promise.reject())
+    .then(b => { blobs[w.id] = URL.createObjectURL(new Blob([b], { type: 'video/mp4' })); }).catch(() => {});
+}
+const wv = document.createElement('video');
+wv.setAttribute('playsinline', ''); wv.playsInline = true; wv.loop = true; wv.preload = 'auto';
+wv.addEventListener('error', () => { const w = WORKS[active]; if (w && wv.src.startsWith('blob:')) { delete blobs[w.id]; wv.src = src(w); playWork(); } });
 const layers = WORKS.map((w, i) => {
   const el = document.createElement('div');
   el.className = 'work'; el.style.zIndex = N - i;
-  el.innerHTML = `<video poster="assets/works/${w.id}.webp" playsinline loop preload="none" aria-label="${w.title}"></video>`;
+  el.innerHTML = `<img src="${still(w)}" alt="" loading="lazy"><canvas hidden></canvas>`;
   stack.appendChild(el);
   $('workTicks').appendChild(document.createElement('i'));
-  return { el, v: el.firstChild, url: `assets/works/${w.id}.mp4` };
+  return { el, freeze: el.lastChild };
 });
-let active = -1, inView = false, wraf = 0;
+let active = -1, inView = false, wraf = 0, blocked = false;
 
-function syncWorks() {
-  layers.forEach((l, i) => {
-    if (inView && i === active) {
-      load(l.v, l.url);
-      if (l.v.paused || l.v.muted !== muted) start(l.v, !muted);
-    } else if (!l.v.paused) l.v.pause();
+function playWork() {
+  if (active < 0) return;
+  if (!inView) { wv.pause(); return; }
+  wv.muted = muted || blocked;
+  const pr = wv.play();
+  if (pr) pr.catch(() => {
+    if (wv.muted) return;
+    blocked = true; wv.muted = true; tapSound.hidden = false;      // 소리가 막혔다: 소리 없이 틀고, 한 번 눌러 켜게 한다
+    wv.play().catch(() => {});
   });
 }
+function syncWorks() {                              // 소리 단추가 바뀌었을 때
+  if (!muted) { blocked = false; tapSound.hidden = true; }
+  if (active >= 0 && inView) playWork(); else wv.muted = muted;
+}
+tapSound.addEventListener('click', () => { blocked = false; tapSound.hidden = true; wv.muted = muted; playWork(); });
+document.addEventListener('mimo:open', () => {     // 셔터를 여는 동작 안에서 영상 태그를 미리 허락받아 둔다
+  if (!wv.src) wv.src = src(WORKS[0]);
+  wv.muted = false;
+  const pr = wv.play(); wv.pause();
+  if (pr) pr.catch(() => {});
+  fetchWork(0);
+});
 function setActive(i) {
   if (i === active) return;
+  const prev = layers[active];
+  if (prev && wv.readyState >= 2 && wv.videoWidth) {               // 나가는 작품은 마지막 장면으로 멈춰 둔다
+    const c = prev.freeze;
+    c.width = wv.videoWidth; c.height = wv.videoHeight;
+    c.getContext('2d').drawImage(wv, 0, 0, c.width, c.height);
+    c.hidden = false;
+  }
   active = i;
-  const w = WORKS[i];
+  const w = WORKS[i], l = layers[i];
+  l.freeze.hidden = true;
+  wv.poster = still(w); wv.src = blobs[w.id] || src(w);
+  l.el.appendChild(wv);
   $('workNo').textContent = String(i + 1).padStart(2, '0');
   $('workTitle').textContent = w.title;
   $('workMeta').textContent = `${w.cat} · ${w.by}`;
-  bg.style.backgroundImage = `url(assets/works/${w.id}.webp)`;
+  bg.style.backgroundImage = `url(${still(w)})`;
   [...$('workTicks').children].forEach((t, k) => t.classList.toggle('is-on', k === i));
   const ui = pin.querySelector('.works-ui');
   if (!reduce) { ui.classList.remove('is-in'); void ui.offsetWidth; ui.classList.add('is-in'); }
-  if (layers[i + 1]) load(layers[i + 1].v, layers[i + 1].url);   // 다음 작품을 미리 받아 둔다
-  syncWorks();
+  fetchWork(i + 1); fetchWork(i - 1);              // 옆 작품을 미리 받아 둔다
+  playWork();
 }
 function onScroll() {
   wraf = 0;
@@ -82,8 +121,11 @@ function onScroll() {
   edge.style.opacity = moving < 0 ? 0 : 1;
   if (moving >= 0) edge.style.transform = `translateY(${(1 - moving) * pin.clientHeight}px)`;
   const nowIn = r.top < vh * 0.6 && r.bottom > vh * 0.4;
-  if (nowIn !== inView) { inView = nowIn; syncWorks(); }
+  const was = inView; inView = nowIn;
+  if (nowIn) fetchWork(0);
+  const before = active;
   setActive(Math.round(f));
+  if (was !== nowIn && before === active) playWork();
 }
 // 스크롤이 작품과 작품 사이에서 멈추면 한 작품에 딱 맞게 옮긴다
 let snapT = 0, touching = false, dir = 0, lastY = scrollY;
@@ -155,7 +197,11 @@ function act(i) {
   mv.loop = false; mv.src = clip(st.clip);
   if (st.lead) mv.addEventListener('loadedmetadata', () => { try { mv.currentTime = st.lead; } catch (e) {} }, { once: true });
   start(mv, st.voice && !muted);
-  if (st.clip === 'hand') { load(cv, 'assets/mimo/cake.mp4'); watchHand(); }
+  if (st.clip === 'hand') {
+    load(cv, 'assets/mimo/cake.mp4');
+    if (cv.currentSrc) { cv.muted = false; const pr = cv.play(); cv.pause(); if (pr) pr.catch(() => {}); }   // 누른 김에 케이크 소리도 허락받는다
+    watchHand();
+  }
 }
 function watchHand() {                      // 손끝이 닿으면 창이 열리고, 이어서 케이크 영상이 나온다
   cancelAnimationFrame(hraf);
