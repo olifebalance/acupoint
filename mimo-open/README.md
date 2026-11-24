@@ -36,7 +36,7 @@ PC처럼 넓은 화면에서는 영상 양옆에 큰 글자가 나온다. 왼쪽
 ## 영상을 바꾸려면
 
 - 쇼릴: `assets/works/`의 작품 파일을 바꾸고 `tools/build_reel.py`의 `SEGS`(작품, 시작 초, 박 수)를 고친 뒤 `python3 tools/build_reel.py 음악.mp3 효과음.wav`.
-- 셔터: 새 영상으로 `python3 tools/build_shutter.py 새영상.mp4`. 카메라가 고정이고 셔터 뒤가 검게 나온 영상이어야 한다.
+- 셔터: 새 영상으로 `python3 tools/build_shutter.py 새영상.mp4`. 색 보정(색상 돌리기, 그림자 들어 올리기)은 이 파일 위쪽의 `HUE_DEG`, `SHADOW`에 있다. 카메라가 고정이고 셔터 뒤가 검게 나온 영상이어야 한다.
 - 음악 파일은 저장소에 넣지 않는다. Epidemic Sound 커넥터로 그때 받는다.
 
 ## 색과 글

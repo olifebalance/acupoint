@@ -17,6 +17,24 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 out = os.path.join(root, "assets", "shutter")
 DARK = 30  # 이 밝기보다 어두우면 가게 안으로 본다
 
+# 색 보정 (치수를 잰 뒤, 저장할 때만 입힌다)
+# 화질을 올린 영상이 처음 드래프트보다 노랑 쪽으로 밀리고 그림자가 깊어져서 되돌린다. 0 과 None 이면 보정 없음
+HUE_DEG = -4.3                                   # 색상을 돌리는 각도. 음수면 노랑에서 주황 쪽
+SHADOW = [(0, 0), (0.04, 0.04), (0.12, 0.158), (0.30, 0.335), (0.50, 0.515), (1, 1)]   # 밝기 곡선. 어두운 부분만 들어 올린다
+
+def grade(im):
+    a = np.asarray(im.convert("RGB"), dtype=np.float32) / 255
+    if HUE_DEG:
+        t = np.deg2rad(-HUE_DEG); c, s_ = np.cos(t), np.sin(t)
+        to_yiq = np.array([[0.299, 0.587, 0.114], [0.596, -0.274, -0.322], [0.211, -0.523, 0.312]], dtype=np.float32)
+        rot = np.array([[1, 0, 0], [0, c, -s_], [0, s_, c]], dtype=np.float32)
+        a = a @ (np.linalg.inv(to_yiq) @ rot @ to_yiq).T
+    if SHADOW:
+        y = (a * np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)).sum(-1, keepdims=True)
+        xs, ys = zip(*SHADOW)
+        a = a * (np.interp(y, xs, ys) / np.maximum(y, 1e-4))
+    return Image.fromarray((np.clip(a, 0, 1) * 255 + 0.5).astype(np.uint8))
+
 tmp = tempfile.mkdtemp()
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf", f"scale='min({WIDTH},iw)':-2:flags=lanczos",
                 os.path.join(tmp, "f_%04d.png")], check=True)
@@ -51,8 +69,8 @@ b = min(int(np.where(edges <= edges.min() + 1)[0].min()) + 2, len(files) - 1)
 for old in glob.glob(os.path.join(out, "f_*.webp")): os.remove(old)
 os.makedirs(out, exist_ok=True)
 for i, idx in enumerate(range(a, b + 1)):
-    Image.open(files[idx]).convert("RGB").save(os.path.join(out, f"f_{i:03d}.webp"), quality=76, method=6)
-Image.open(files[a]).convert("RGB").save(os.path.join(out, "poster.jpg"), quality=84)
+    grade(Image.open(files[idx])).save(os.path.join(out, f"f_{i:03d}.webp"), quality=76, method=6)
+grade(Image.open(files[a])).save(os.path.join(out, "poster.jpg"), quality=84)
 
 meta = {"w": W, "h": H, "n": b - a + 1,
         "hole": {"x0": x0 + 1, "x1": x1 + 1, "yb": int(y_bot + 13 * k)},
