@@ -19,6 +19,8 @@ const TITLE_AT = R.titleAt;   // 쇼릴에서 제목이 박히는 시각(초)
 // 넓은 화면에서 영상 왼쪽에 박자마다 바뀌는 낱말. 오른쪽에는 "광고로."가 고정으로 있다
 const WORDS = { burger: '버거를', andz: '옷을', bakery: '빵을', book: '책을', wuxia: '이야기를' };
 const LAST_WORD = '스토어를';
+// 넓은 화면에서 양옆 스토어의 간판에 적는 말(MIMO 가 하는 일). 가운데에서 가까운 순서: 왼쪽, 오른쪽, 그 옆 왼쪽, 오른쪽
+const SIDE_SIGNS = [['광고 영상', 'AD FILM'], ['상세페이지', 'DETAIL PAGE'], ['스토어 콘텐츠', 'STORE CONTENTS'], ['메뉴판', 'MENU']];
 const OPEN_AT = 0.28;         // 이만큼 올리고 손을 떼면 끝까지 올라간다
 
 /* ── 프레임 ── */
@@ -50,6 +52,19 @@ function layout() {
   const u = fw / 480;
   place(sign, ox + SIGN.x * fw, oy + SIGN.y * fh, SIGN.w * fw, SIGN.h * fh);
   sign.style.fontSize = 13.5 * u + 'px';
+  front.querySelectorAll('.sign-side').forEach(el => el.remove());
+  for (let k = 1, n = 0; ox - (k - 1) * fw > 0 && n < SIDE_SIGNS.length; k++) {
+    const sx = (k % 2 === 1 ? 1 - SIGN.x - SIGN.w : SIGN.x) * fw;   // 홀수 번째 스토어는 좌우를 뒤집어 그린다
+    if (ox - k * fw + sx < 8) break;                                  // 간판이 화면에 다 들어올 때만 적는다
+    for (const dir of [-1, 1]) {
+      const el = document.createElement('div');
+      el.className = 'sign sign-side'; el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = `<b>${SIDE_SIGNS[n][0]}</b><span>${SIDE_SIGNS[n][1]}</span>`;
+      place(el, ox + dir * k * fw + sx, oy + SIGN.y * fh, SIGN.w * fw, SIGN.h * fh);
+      el.style.fontSize = 13.5 * u + 'px';
+      front.insertBefore(el, sign); n++;
+    }
+  }
   const hx = ox + M.hole.x0 * s, hw = (M.hole.x1 - M.hole.x0) * s;
   const ht = oy + SLAT_TOP * fh, hb = oy + M.hole.yb * s;
   place(slat, hx, ht, hw, hb - ht);
@@ -81,7 +96,7 @@ function draw() {
       drawFrame(f0, ox - k * fw, k % 2 === 1);
       drawFrame(f0, ox + k * fw, k % 2 === 1);
     }
-    cx.fillStyle = 'rgba(14,21,36,.45)';
+    cx.fillStyle = 'rgba(14,21,36,.16)';       // 양옆은 살짝만 눌러 가운데가 먼저 보이게 한다
     cx.fillRect(0, 0, ox, vh); cx.fillRect(ox + fw, 0, vw - ox - fw, vh);
   }
   drawFrame(im, ox, false);

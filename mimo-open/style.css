@@ -56,6 +56,8 @@ button:focus-visible{outline:3px solid var(--cream);outline-offset:3px}
 .sign{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5em;color:var(--navy);mix-blend-mode:multiply;opacity:.94;pointer-events:none;text-align:center}
 .sign b{font-family:var(--logo);font-weight:900;font-size:3.1em;letter-spacing:.06em;line-height:1}
 .sign span{font-weight:800;font-size:.92em;letter-spacing:.34em;margin-right:-.34em}
+.sign-side{opacity:.86}
+.sign-side b{font-family:var(--sans);font-size:2.4em;letter-spacing:-.03em}
 .slat{position:absolute;overflow:hidden;pointer-events:none}
 .slat-copy{position:absolute;left:7%;bottom:9%;margin:0;font-weight:900;line-height:1.08;letter-spacing:-.035em;color:var(--cream);
   text-shadow:0 .04em .16em rgba(14,21,36,.62),0 0 .7em rgba(14,21,36,.34);will-change:transform,opacity}
