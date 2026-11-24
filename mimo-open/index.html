@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MIMO — 문을 열면, 광고가 시작됩니다</title>
+<meta name="description" content="MIMO 1인 광고 스튜디오. 광고 영상, 상세페이지, 스토어 콘텐츠를 기획부터 편집까지 미모가 직접 만듭니다.">
+<meta name="theme-color" content="#0c0906">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="stage" id="stage">
+
+  <!-- 뒤: 셔터 안에서 나오는 쇼릴 -->
+  <div class="reel" id="reel" aria-hidden="true">
+    <canvas class="reel-glow" id="glow" width="36" height="64"></canvas>
+    <video class="reel-video" id="video" src="assets/showreel.mp4" poster="assets/showreel-poster.jpg" playsinline preload="auto"></video>
+    <div class="reel-scrim"></div>
+  </div>
+
+  <!-- 앞: 가게 셔터 -->
+  <div class="front" id="front">
+    <canvas class="shutter" id="shutter" role="img" aria-label="아침 햇살이 드는 작은 가게. 셔터가 내려져 있습니다."></canvas>
+    <div class="sign" id="sign" aria-hidden="true">
+      <b>MIMO</b>
+      <span>1인 광고 스튜디오</span>
+    </div>
+    <div class="slat" id="slat">
+      <h1 class="slat-copy" id="slatCopy">오늘도<br>가게 문을<br>엽니다.</h1>
+    </div>
+    <div class="pull-wrap" id="pullWrap">
+      <button class="pull" id="pull" type="button">
+        <span class="pull-arrows" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="pull-text">위로 밀어 셔터 올리기</span>
+      </button>
+      <p class="pull-note">셔터가 올라가면 음악이 나옵니다</p>
+    </div>
+  </div>
+
+  <!-- 셔터가 열린 뒤 -->
+  <header class="top" id="top" hidden>
+    <span class="logo">MIMO</span>
+    <button class="chip" id="sound" type="button" aria-pressed="true">소리 끄기</button>
+  </header>
+
+  <section class="title" id="title" hidden aria-live="polite">
+    <p class="eyebrow">MIMO · 1인 광고 스튜디오</p>
+    <h2 class="headline">
+      <span class="ln"><span>문을 열면,</span></span>
+      <span class="ln"><span>광고가</span></span>
+      <span class="ln"><span>시작됩니다.</span></span>
+    </h2>
+    <p class="lede">광고 영상 · 상세페이지 · 스토어 콘텐츠.<br>기획부터 편집까지 미모가 직접 만듭니다.</p>
+    <div class="actions">
+      <button class="btn btn-solid" id="replay" type="button">영상 다시 보기</button>
+      <button class="btn" id="reset" type="button">셔터 다시 내리기</button>
+    </div>
+    <p class="stage-note">첫 화면 시안입니다. 작업물과 문의 화면은 다음 단계에서 이어집니다.</p>
+  </section>
+
+  <noscript>
+    <div class="nojs">
+      <img src="assets/shutter/poster.jpg" alt="아침 햇살이 드는 작은 가게의 닫힌 셔터">
+      <p>MIMO · 1인 광고 스튜디오. 화면을 움직이려면 자바스크립트를 켜 주세요.</p>
+    </div>
+  </noscript>
+</main>
+<script src="assets/shutter/meta.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
