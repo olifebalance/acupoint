@@ -19,7 +19,8 @@ DARK = 30  # 이 밝기보다 어두우면 가게 안으로 본다
 
 # 색 보정 (치수를 잰 뒤, 저장할 때만 입힌다)
 # 화질을 올린 영상이 처음 드래프트보다 노랑 쪽으로 밀리고 그림자가 깊어져서 되돌린다. 0 과 None 이면 보정 없음
-HUE_DEG = -4.3                                   # 색상을 돌리는 각도. 음수면 노랑에서 주황 쪽
+HUE_DEG = -6.0                                   # 색상을 돌리는 각도. 음수면 노랑에서 주황 쪽
+SAT = 0.78                                       # 색의 진하기. 1 이면 그대로, 작을수록 누런 기가 빠진다
 SHADOW = [(0, 0), (0.04, 0.04), (0.12, 0.158), (0.30, 0.335), (0.50, 0.515), (1, 1)]   # 밝기 곡선. 어두운 부분만 들어 올린다
 
 def grade(im):
@@ -27,7 +28,7 @@ def grade(im):
     if HUE_DEG:
         t = np.deg2rad(-HUE_DEG); c, s_ = np.cos(t), np.sin(t)
         to_yiq = np.array([[0.299, 0.587, 0.114], [0.596, -0.274, -0.322], [0.211, -0.523, 0.312]], dtype=np.float32)
-        rot = np.array([[1, 0, 0], [0, c, -s_], [0, s_, c]], dtype=np.float32)
+        rot = np.array([[1, 0, 0], [0, c * SAT, -s_ * SAT], [0, s_ * SAT, c * SAT]], dtype=np.float32)
         a = a @ (np.linalg.inv(to_yiq) @ rot @ to_yiq).T
     if SHADOW:
         y = (a * np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)).sum(-1, keepdims=True)
