@@ -97,8 +97,6 @@ function draw() {
       drawFrame(f0, ox - k * fw, k % 2 === 1);
       drawFrame(f0, ox + k * fw, k % 2 === 1);
     }
-    cx.fillStyle = 'rgba(14,21,36,.28)';       // 양옆은 살짝만 눌러 가운데가 먼저 보이게 한다
-    cx.fillRect(0, 0, ox, vh); cx.fillRect(ox + fw, 0, vw - ox - fw, vh);
   }
   drawFrame(im, ox, false);
   const e = M.edges[i];
