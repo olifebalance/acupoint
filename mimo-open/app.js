@@ -21,7 +21,8 @@ const WORDS = { burger: '버거를', andz: '옷을', bakery: '빵을', book: '�
 const LAST_WORD = '스토어를';
 // 넓은 화면에서 양옆 스토어의 간판에 적는 말(MIMO 가 하는 일). 가운데에서 가까운 순서: 왼쪽, 오른쪽, 그 옆 왼쪽, 오른쪽
 const SIDE_SIGNS = [['광고 영상', 'AD FILM'], ['상세페이지', 'DETAIL PAGE'], ['스토어 콘텐츠', 'STORE CONTENTS'], ['메뉴판', 'MENU']];
-const OPEN_AT = 0.28;         // 이만큼 올리고 손을 떼면 끝까지 올라간다
+const OPEN_AT = 0.42;         // 이만큼 올리고 손을 떼면 끝까지 올라간다
+const PULL = 0.58;            // 화면 높이의 이만큼을 밀어야 다 올라간다(클수록 오래 민다)
 
 /* ── 프레임 ── */
 const frames = new Array(M.n);
@@ -148,7 +149,7 @@ stage.addEventListener('pointermove', e => {
   if (!drag) return;
   const dy = drag.y - e.clientY;
   if (Math.abs(dy) > 4) drag.moved = true;
-  setP(drag.p + dy / (vh * 0.4));
+  setP(drag.p + dy / (vh * PULL));
 });
 function release() {
   if (!drag) return;
@@ -191,7 +192,7 @@ function open() {
   cancelAnimationFrame(anim);
   play();
   top.hidden = false; say.hidden = false; syncSound();
-  tween(1, 240 + 360 * (1 - p), enter);
+  tween(1, 520 + 780 * (1 - p), enter);   // 무거운 셔터처럼 천천히 마저 올라간다
 }
 function enter() {                        // 가게 안으로 들어간다
   if (reduce) {
@@ -202,7 +203,7 @@ function enter() {                        // 가게 안으로 들어간다
   const z = Math.max(vw / hw, vh / hh) * 1.08;
   front.animate(
     [{ transform: 'scale(1)', opacity: 1 }, { transform: `scale(${z})`, opacity: 1, offset: 0.8 }, { transform: `scale(${z * 1.1})`, opacity: 0 }],
-    { duration: 620, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' }
+    { duration: 760, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' }
   ).onfinish = () => { front.hidden = true; unlock(); };
 }
 function unlock() {                       // 셔터가 열린 뒤에는 아래 화면으로 내려갈 수 있다

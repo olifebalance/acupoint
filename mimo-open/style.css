@@ -109,6 +109,13 @@ button:focus-visible{outline:3px solid var(--cream);outline-offset:3px}
 .roomy .lede br{display:none}
 .roomy .actions{justify-content:center;margin-top:0}
 a.btn{display:inline-flex;align-items:center;text-decoration:none}
+/* 아래에 화면이 더 있다는 표시 */
+.more{align-self:center;display:inline-flex;align-items:center;gap:10px;margin-top:6px;min-height:44px;padding:0 18px 0 14px;border-radius:999px;
+  background:var(--veil);border:1.5px solid var(--line);font-weight:800;font-size:14px;text-decoration:none;animation:fadein .5s 1.1s both}
+.more-arrows{position:relative;width:16px;height:24px;display:block}
+.more-arrows i{position:absolute;left:3px;width:9px;height:9px;border-right:2.5px solid var(--point);border-bottom:2.5px solid var(--point);transform:rotate(45deg);opacity:0;animation:sink 1.5s infinite}
+.more-arrows i:nth-child(1){top:0}.more-arrows i:nth-child(2){top:6px;animation-delay:.16s}.more-arrows i:nth-child(3){top:12px;animation-delay:.32s}
+@keyframes sink{0%{opacity:0;translate:0 -5px}35%{opacity:1}70%,100%{opacity:0;translate:0 5px}}
 .roomy.titled .reel-scrim{background:linear-gradient(180deg,rgba(14,21,36,0) 52%,rgba(14,21,36,.9) 100%)}
 .mini{display:flex;gap:10px;align-items:center;margin:0;font-size:12.5px;color:rgba(243,234,211,.6);animation:fadein .5s .75s both}
 .mini button{background:none;border:0;padding:6px 0;color:inherit;text-decoration:underline;text-underline-offset:3px}
@@ -118,8 +125,8 @@ a.btn{display:inline-flex;align-items:center;text-decoration:none}
 .nojs img{max-width:min(100%,360px);border-radius:8px}
 
 @media (prefers-reduced-motion:reduce){
-  .pull-arrows i{animation:none;opacity:1}
-  .ln>span,.eyebrow,.lede,.actions,.mini,.top,.say-l.is-in,.works-ui.is-in,.sheet.is-in .sheet-rows>div{animation:none}
+  .pull-arrows i,.more-arrows i{animation:none;opacity:1}
+  .ln>span,.eyebrow,.lede,.actions,.mini,.more,.top,.say-l.is-in,.works-ui.is-in,.sheet.is-in .sheet-rows>div{animation:none}
 }
 
 /* ═════ 첫 화면 아래 ═════ */
