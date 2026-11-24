@@ -11,6 +11,7 @@
   --navy:#1D2A47;       /* 간판 글씨, 단추 글자 (B10-5 뒤 색) */
   --point:#E77B2F;      /* 화살표, 제목의 낱말 (B18-1 뒤 색) */
   --mint:#B9DFC9;       /* 셔터 위 '스토어' (미모 지정) */
+  --mint-wide:#8FD3AF;  /* 넓은 화면(PC)에서의 '스토어'. 같은 민트를 한 단계 진하게 */
   --deep:#0E1524;       /* 바탕: 네이비를 어둡게 한 값 */
   --dim:rgba(243,234,211,.74);
   --line:rgba(243,234,211,.5);
@@ -50,6 +51,7 @@ button:focus-visible{outline:3px solid var(--cream);outline-offset:3px}
   text-shadow:0 .04em .16em rgba(14,21,36,.62),0 0 .7em rgba(14,21,36,.34);will-change:transform,opacity}
 .pt{font-style:normal;color:var(--point)}
 .slat-copy .pt{color:var(--mint)}
+.wide .slat-copy .pt{color:var(--mint-wide)}
 
 .pull-wrap{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;gap:8px;
   padding:0 var(--gut-r) calc(18px + env(safe-area-inset-bottom,0px)) var(--gut-l);will-change:opacity}
