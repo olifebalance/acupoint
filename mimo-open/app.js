@@ -3,19 +3,22 @@
    뒤: 구멍으로 쇼릴 영상이 보인다. 손을 떼면 영상과 음악이 시작된다. */
 (() => {
 'use strict';
-const M = window.SHUTTER;
+const M = window.SHUTTER, R = window.REEL;
 const $ = id => document.getElementById(id);
 const stage = $('stage'), front = $('front'), cv = $('shutter'), cx = cv.getContext('2d');
 const sign = $('sign'), slat = $('slat'), slatCopy = $('slatCopy'), pullWrap = $('pullWrap'), pull = $('pull');
 const video = $('video'), glow = $('glow'), gx = glow.getContext('2d');
-const top = $('top'), sound = $('sound'), title = $('title');
+const top = $('top'), sound = $('sound'), title = $('title'), say = $('say'), sayL = $('sayL');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // 영상 프레임 안에서의 자리 (프레임 크기에 대한 비율)
 const SIGN = { x: 66 / 480, y: 28 / 854, w: 346 / 480, h: 160 / 854 }; // 빈 간판
 const SLAT_TOP = 275 / 854;   // 셔터가 말려 들어가는 윗단
 const CROP = 22 / 480;        // 좁은 화면에서 좌우로 잘라도 되는 폭
-const TITLE_AT = 10.2;        // 쇼릴에서 제목이 박히는 시각(초)
+const TITLE_AT = R.titleAt;   // 쇼릴에서 제목이 박히는 시각(초)
+// 넓은 화면에서 영상 왼쪽에 박자마다 바뀌는 낱말. 오른쪽에는 "광고로."가 고정으로 있다
+const WORDS = { burger: '버거를', andz: '옷을', bakery: '빵을', book: '책을', wuxia: '이야기를' };
+const LAST_WORD = '스토어를';
 const OPEN_AT = 0.28;         // 이만큼 올리고 손을 떼면 끝까지 올라간다
 
 /* ── 프레임 ── */
@@ -42,6 +45,8 @@ function layout() {
   if (M.w * s > vw) s = Math.max(vw / M.w, Math.min(s, vw / (M.w * (1 - 2 * CROP))));
   fw = M.w * s; fh = M.h * s; ox = (vw - fw) / 2; oy = (vh - fh) * 0.4;
   stage.classList.toggle('wide', vw / vh > 0.72);
+  stage.classList.toggle('roomy', (vw - fw) / 2 > 240);   // 영상 양옆에 큰 글자를 놓을 자리가 있는가
+  stage.style.setProperty('--half', fw / 2 + 'px');
   const u = fw / 480;
   place(sign, ox + SIGN.x * fw, oy + SIGN.y * fh, SIGN.w * fw, SIGN.h * fh);
   sign.style.fontSize = 13.5 * u + 'px';
@@ -122,14 +127,17 @@ stage.addEventListener('pointermove', e => {
   if (Math.abs(dy) > 4) drag.moved = true;
   setP(drag.p + dy / (vh * 0.4));
 });
-stage.addEventListener('pointerup', () => {
+function release() {
   if (!drag) return;
   const moved = drag.moved; drag = null;
   if (done) return;
   if (p > OPEN_AT) open();
   else if (!moved) tween(0.1, 160, () => tween(0, 380));   // 톡 치면 살짝 들썩인다
   else tween(0, 380);
-});
+}
+// 손가락은 touchend 에서 받는다. 아이폰 사파리가 소리 재생을 허락하는 동작이 touchend 이기 때문이다
+stage.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') release(); });
+stage.addEventListener('touchend', release);
 stage.addEventListener('pointercancel', () => { if (drag) { drag = null; if (!done) tween(0, 380); } });
 pull.addEventListener('click', () => { if (!done) open(); });
 stage.addEventListener('wheel', e => {
@@ -154,7 +162,7 @@ function open() {
   done = true;
   cancelAnimationFrame(anim);
   play();
-  top.hidden = false;
+  top.hidden = false; say.hidden = false;
   tween(1, 240 + 360 * (1 - p), enter);
 }
 function enter() {                        // 가게 안으로 들어간다
@@ -173,9 +181,20 @@ function enter() {                        // 가게 안으로 들어간다
 /* ── 쇼릴 ── */
 function showTitle() { title.hidden = false; stage.classList.add('titled'); }
 function hideTitle() { title.hidden = true; stage.classList.remove('titled'); }
+let cut = -1;
+function word() {                          // 지금 컷에 맞는 낱말을 왼쪽에 박는다
+  const t = video.currentTime;
+  let i = 0;
+  while (i + 1 < R.cuts.length && R.cuts[i + 1][0] <= t + 0.02) i++;
+  if (i === cut) return;
+  cut = i;
+  sayL.textContent = i === R.cuts.length - 1 ? LAST_WORD : WORDS[R.cuts[i][1]];
+  sayL.classList.remove('is-in'); void sayL.offsetWidth; sayL.classList.add('is-in');
+}
 function tick() {
   if (video.paused || video.ended) return;
   if (done && title.hidden && video.currentTime >= TITLE_AT) showTitle();
+  word();
   if (stage.classList.contains('wide')) gx.drawImage(video, 0, 0, glow.width, glow.height);
   requestAnimationFrame(tick);
 }
@@ -188,10 +207,10 @@ function syncSound(nudge) {
   sound.classList.toggle('is-nudge', !!nudge && muted);
 }
 sound.addEventListener('click', () => { muted = !muted; video.muted = muted; syncSound(); });
-$('replay').addEventListener('click', () => { hideTitle(); play(); });
+$('replay').addEventListener('click', () => { hideTitle(); cut = -1; play(); });
 $('reset').addEventListener('click', () => {
   video.pause(); video.currentTime = 0;
-  hideTitle(); top.hidden = true;
+  hideTitle(); top.hidden = true; say.hidden = true; cut = -1;
   front.getAnimations().forEach(a => a.cancel());
   front.hidden = false; done = false;
   setP(0);

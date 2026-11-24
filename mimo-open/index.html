@@ -18,7 +18,13 @@
     <div class="reel-scrim"></div>
   </div>
 
-  <!-- 앞: 가게 셔터 -->
+  <!-- 넓은 화면에서만: 영상 양옆의 큰 글자. "빵을 → (영상) → 광고로." -->
+  <div class="say" id="say" hidden aria-hidden="true">
+    <span class="say-l" id="sayL"></span>
+    <span class="say-r">광고로.</span>
+  </div>
+
+  <!-- 앞: 스토어 셔터 -->
   <div class="front" id="front">
     <canvas class="shutter" id="shutter" role="img" aria-label="아침 햇살이 드는 스토어. 셔터가 내려져 있습니다."></canvas>
     <div class="sign" id="sign" aria-hidden="true">
@@ -66,6 +72,7 @@
   </noscript>
 </main>
 <script src="assets/shutter/meta.js"></script>
+<script src="assets/reel-meta.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

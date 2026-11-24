@@ -1,0 +1,1 @@
+window.REEL={"titleAt":10.22,"cuts":[[0.0,"burger"],[1.042,"wuxia"],[2.042,"andz"],[3.083,"bakery"],[4.083,"book"],[5.125,"burger"],[5.625,"andz"],[6.125,"wuxia"],[6.625,"bakery"],[7.167,"book"],[7.417,"wuxia"],[7.667,"andz"],[7.917,"burger"],[8.167,"burger"]]};
