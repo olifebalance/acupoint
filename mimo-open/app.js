@@ -131,7 +131,16 @@ function tween(to, ms, then) {
   anim = requestAnimationFrame(step);
 }
 
+let primed = false;
+function prime() {                         // 손이 닿는 순간 영상을 미리 깨워 둔다. 손을 뗄 때 음악이 바로 나오게 하기 위해서다
+  if (primed || done) return;
+  primed = true;
+  video.muted = true;
+  const pr = video.play();
+  if (pr) pr.then(() => { if (!done) { video.pause(); video.currentTime = 0; } }, () => {});
+}
 stage.addEventListener('pointerdown', e => {
+  if (!done) prime();
   if (done || e.target.closest('button')) return;
   cancelAnimationFrame(anim);
   drag = { y: e.clientY, p, moved: false };
@@ -180,7 +189,7 @@ function play() {
   watch = setTimeout(() => { if (done && video.currentTime < 0.05) askTap('눌러서 영상과 소리 켜기'); }, 1500);
 }
 function open() {
-  done = true;
+  done = true; cut = -1;
   cancelAnimationFrame(anim);
   play();
   top.hidden = false; say.hidden = false;
@@ -215,7 +224,7 @@ function word() {                          // 지금 컷에 맞는 낱말을 왼
 function tick() {
   if (video.paused || video.ended) return;
   if (done && title.hidden && video.currentTime >= TITLE_AT) showTitle();
-  word();
+  if (done) word();
   if (stage.classList.contains('wide') && video.videoWidth) {   // 넓은 화면: 같은 영상을 화면 가득 깔아 배경으로 쓴다
     const sh = video.videoWidth * glow.height / glow.width;
     gx.drawImage(video, 0, (video.videoHeight - sh) * 0.42, video.videoWidth, sh, 0, 0, glow.width, glow.height);
