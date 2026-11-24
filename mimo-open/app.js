@@ -190,12 +190,12 @@ function open() {
   done = true; cut = -1;
   cancelAnimationFrame(anim);
   play();
-  top.hidden = false; say.hidden = false;
+  top.hidden = false; say.hidden = false; syncSound();
   tween(1, 240 + 360 * (1 - p), enter);
 }
 function enter() {                        // 가게 안으로 들어간다
   if (reduce) {
-    front.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }).onfinish = () => { front.hidden = true; };
+    front.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }).onfinish = () => { front.hidden = true; unlock(); };
     return;
   }
   const hw = (M.hole.x1 - M.hole.x0) * s, hh = (M.hole.yb - M.edges[M.n - 1]) * s;
@@ -203,7 +203,11 @@ function enter() {                        // 가게 안으로 들어간다
   front.animate(
     [{ transform: 'scale(1)', opacity: 1 }, { transform: `scale(${z})`, opacity: 1, offset: 0.8 }, { transform: `scale(${z * 1.1})`, opacity: 0 }],
     { duration: 620, easing: 'cubic-bezier(.6,0,.9,.4)', fill: 'forwards' }
-  ).onfinish = () => { front.hidden = true; };
+  ).onfinish = () => { front.hidden = true; unlock(); };
+}
+function unlock() {                       // 셔터가 열린 뒤에는 아래 화면으로 내려갈 수 있다
+  document.documentElement.classList.add('open');
+  stage.style.touchAction = 'pan-y';
 }
 
 /* ── 쇼릴 ── */
@@ -233,6 +237,7 @@ video.addEventListener('play', () => requestAnimationFrame(tick));
 video.addEventListener('ended', () => { if (done && title.hidden) showTitle(); });
 
 function syncSound(nudge) {
+  document.dispatchEvent(new CustomEvent('mimo:sound', { detail: { muted } }));   // 아래 화면의 영상도 같은 소리 설정을 따른다
   sound.textContent = muted ? '소리 켜기' : '소리 끄기';
   sound.setAttribute('aria-pressed', String(!muted));
   sound.classList.toggle('is-nudge', !!nudge && muted);
@@ -249,6 +254,7 @@ $('reset').addEventListener('click', () => {
   hideTitle(); top.hidden = true; say.hidden = true; tap.hidden = true; cut = -1; clearTimeout(watch);
   front.getAnimations().forEach(a => a.cancel());
   front.hidden = false; done = false;
+  document.documentElement.classList.remove('open'); stage.style.touchAction = ''; scrollTo(0, 0);
   setP(0);
 });
 
@@ -260,6 +266,8 @@ fetch('assets/showreel.mp4').then(r => r.ok ? r.blob() : Promise.reject()).then(
 video.addEventListener('error', () => {  // 받아 둔 영상을 쓸 수 없는 환경이면 원래 주소로 돌아간다
   if (blobUrl && video.src === blobUrl) { blobUrl = ''; video.src = 'assets/showreel.mp4'; }
 });
+
+new IntersectionObserver(es => { if (done && !es[0].isIntersecting) video.pause(); }, { threshold: 0.25 }).observe(stage);
 
 addEventListener('resize', layout);
 layout();

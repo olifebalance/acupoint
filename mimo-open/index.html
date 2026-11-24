@@ -9,7 +9,8 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="stage" id="stage">
+<main>
+<div class="stage" id="stage">
 
   <!-- 뒤: 셔터 안에서 나오는 쇼릴 -->
   <div class="reel" id="reel" aria-hidden="true">
@@ -60,10 +61,10 @@
     </h2>
     <p class="lede">광고 영상 · 상세페이지 · 스토어 콘텐츠. <br>기획부터 편집까지 미모가 직접 만듭니다.</p>
     <div class="actions">
-      <button class="btn btn-solid" id="replay" type="button">영상 다시 보기</button>
-      <button class="btn" id="reset" type="button">셔터 다시 내리기</button>
+      <a class="btn btn-solid" href="#works">작업물 보기</a>
+      <a class="btn" href="#contact">제작 문의</a>
     </div>
-    <p class="stage-note">첫 화면 시안입니다. 작업물과 문의 화면은 다음 단계에서 이어집니다.</p>
+    <p class="mini"><button id="replay" type="button">영상 다시 보기</button><i aria-hidden="true">·</i><button id="reset" type="button">셔터 다시 내리기</button></p>
   </section>
 
   <noscript>
@@ -72,9 +73,135 @@
       <p>MIMO · 1인 광고 스튜디오. 화면을 움직이려면 자바스크립트를 켜 주세요.</p>
     </div>
   </noscript>
+</div>
+
+<!-- ───── 작업물: 스크롤하면 셔터가 올라가듯 다음 작품이 나온다 ───── -->
+<section class="lead" aria-labelledby="works-h">
+  <p class="eyebrow">WORK</p>
+  <h2 id="works-h">짧은 순간,<br>오래 남는 <em class="pt">장면</em>.</h2>
+  <p>스토어의 분위기도, 제품의 매력도. 직접 만든 영상으로 먼저 보여드릴게요.</p>
+</section>
+<section class="works" id="works" aria-label="작업물 다섯 편">
+  <div class="works-pin" id="worksPin">
+    <div class="works-bg" id="worksBg" aria-hidden="true"></div>
+    <div class="works-stack" id="worksStack"></div>
+    <div class="works-edge" id="worksEdge" aria-hidden="true"></div>
+    <div class="works-ui">
+      <p class="works-no"><b id="workNo">01</b><span> / 05</span></p>
+      <h3 class="works-title" id="workTitle"></h3>
+      <p class="works-meta" id="workMeta"></p>
+      <div class="works-ticks" id="workTicks" aria-hidden="true"></div>
+    </div>
+  </div>
+</section>
+<p class="fineprint">브랜드 작품과 창작 콘셉트를 구분해 소개합니다. 영상 속 행사·프로모션은 제작 당시의 내용입니다.</p>
+
+<!-- ───── 맡기는 방법: 견적서에 적히는 것 ───── -->
+<section class="sec" id="how" aria-labelledby="how-h">
+  <div class="sec-head">
+    <p class="eyebrow">SERVICES</p>
+    <h2 id="how-h">스토어에 필요한 만큼,<br>함께 정하고 <em class="pt">만듭니다</em>.</h2>
+    <p>한 편의 영상부터 하나의 브랜드 분위기까지. 목적과 사용할 채널에 맞춰 제작합니다.</p>
+  </div>
+  <div class="est">
+    <div class="est-tabs" role="tablist" aria-label="서비스 고르기">
+      <button class="est-tab is-on" role="tab" aria-selected="true" data-k="film" id="tab-film" type="button">광고 영상 · 릴스</button>
+      <button class="est-tab" role="tab" aria-selected="false" data-k="page" id="tab-page" type="button">상세페이지 · 제품 이미지</button>
+      <button class="est-tab" role="tab" aria-selected="false" data-k="store" id="tab-store" type="button">스토어 콘텐츠 · 메뉴판</button>
+    </div>
+    <article class="sheet" id="sheet" aria-live="polite">
+      <header class="sheet-top">
+        <div>
+          <p class="sheet-kicker">ESTIMATE · 견적서에 적히는 것</p>
+          <h3 class="sheet-title" id="sheetTitle"></h3>
+          <p class="sheet-sub" id="sheetSub"></p>
+        </div>
+        <div class="stamp" aria-hidden="true">MIMO</div>
+      </header>
+      <dl class="sheet-rows">
+        <div><dt>견적 기준</dt><dd id="sheetBasis"></dd></div>
+        <div><dt>작업 기간</dt><dd>시작 전에 견적서에 적어 드립니다.</dd></div>
+        <div><dt>수정 횟수</dt><dd>몇 번까지 포함인지 견적서에 적어 드립니다.</dd></div>
+        <div><dt>추가 비용</dt><dd>생길 수 있는 경우를 견적서에 미리 적어 드립니다.</dd></div>
+        <div><dt>받을 파일</dt><dd id="sheetFiles"></dd></div>
+      </dl>
+      <p class="sheet-foot">가격과 일정은 작업 범위를 정한 뒤 안내합니다. 제작을 시작하기 전에 포함되는 내용을 확인할 수 있습니다.</p>
+    </article>
+  </div>
+  <div class="steps">
+    <h3>처음 의뢰해도 괜찮아요.</h3>
+    <ol>
+      <li><b>이야기 나누기</b><span>제품과 목적, 원하는 분위기, 사용할 곳을 알려주세요.</span></li>
+      <li><b>범위 정하기</b><span>구성과 견적, 일정, 수정·제공 범위를 확인합니다.</span></li>
+      <li><b>시안 확인하기</b><span>짧은 영상이나 디자인 시안으로 방향을 먼저 맞춥니다.</span></li>
+      <li><b>완성해서 전달하기</b><span>확정한 내용을 반영해 약속한 형식으로 전달합니다.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ───── 미모 소개 ───── -->
+<section class="sec about" id="about" aria-labelledby="about-h">
+  <div class="about-film">
+    <video id="mimoVideo" poster="assets/mimo/mimo-idle.jpg" playsinline muted loop preload="none"></video>
+    <div class="about-btns">
+      <button class="chip" type="button" data-clip="welcome">인사 듣기</button>
+      <button class="chip" type="button" data-clip="hand">손짓</button>
+      <button class="chip" type="button" data-clip="smile">미소</button>
+    </div>
+  </div>
+  <div class="sec-head">
+    <p class="eyebrow">MIMO · BEHIND THE SCENES</p>
+    <h2 id="about-h">스토어의 하루를 알기에,<br>보여줄 <em class="pt">장면</em>을 찾습니다.</h2>
+    <p>아울렛에서 스토어를 운영하며 고객을 만납니다. 어디에서 걸음을 멈추는지, 어떤 설명에 귀를 기울이는지. 그 경험을 광고와 콘텐츠에 담습니다.</p>
+    <p>미모는 스토어의 이야기를 함께 정리하고, 고객에게 보여줄 장면으로 만드는 제작 파트너입니다.</p>
+  </div>
+</section>
+
+<!-- ───── 문의 ───── -->
+<section class="sec contact" id="contact" aria-labelledby="contact-h">
+  <div class="sec-head">
+    <p class="eyebrow">CONTACT</p>
+    <h2 id="contact-h">다음 이야기는,<br>당신의 <em class="pt">스토어</em>.</h2>
+    <p>아직 구체적이지 않아도 괜찮아요. 지금 생각하는 것부터 적어주세요.</p>
+  </div>
+  <form class="ask" id="ask" novalidate>
+    <fieldset>
+      <legend>어떤 작업이 필요한가요?</legend>
+      <div class="ask-kinds">
+        <label><input type="checkbox" name="kind" id="k1" value="광고 영상 · 릴스"><span>광고 영상 · 릴스</span></label>
+        <label><input type="checkbox" name="kind" id="k2" value="상세페이지 · 제품 이미지"><span>상세페이지 · 제품 이미지</span></label>
+        <label><input type="checkbox" name="kind" id="k3" value="스토어 콘텐츠 · 메뉴판"><span>스토어 콘텐츠 · 메뉴판</span></label>
+        <label><input type="checkbox" name="kind" id="k4" value="먼저 상담하고 싶어요"><span>먼저 상담하고 싶어요</span></label>
+      </div>
+    </fieldset>
+    <label class="ask-field" for="story"><span>스토어와 만들고 싶은 이야기</span>
+      <textarea id="story" name="story" rows="4" placeholder="예) 동네 베이커리예요. 새로 나온 빵을 릴스로 알리고 싶어요."></textarea></label>
+    <div class="ask-two">
+      <label class="ask-field" for="place"><span>사용할 곳</span>
+        <select id="place" name="place"><option value="">선택</option><option>인스타그램 · 릴스</option><option>스마트스토어 · 상세페이지</option><option>매장(메뉴판 · 안내물)</option><option>아직 모르겠어요</option></select></label>
+      <label class="ask-field" for="when"><span>희망 일정</span>
+        <select id="when" name="when"><option value="">선택</option><option>2주 안에</option><option>한 달 안에</option><option>여유 있어요</option><option>상담하며 정할게요</option></select></label>
+    </div>
+    <button class="btn btn-solid" type="submit">문의 내용 만들기</button>
+    <div class="ask-out" id="askOut" hidden>
+      <p class="ask-out-h">정리한 문의 내용</p>
+      <pre id="askText"></pre>
+      <button class="btn" id="askCopy" type="button">문의 내용 복사</button>
+    </div>
+    <p class="fineprint">이 양식은 문의 내용을 정리·복사하며, 메시지를 전송하지 않습니다.</p>
+  </form>
+</section>
+
+<footer class="foot">
+  <b>MIMO</b>
+  <p>당신의 스토어에, 시선을 만드는 이야기.</p>
+  <p class="foot-sub">광고 영상 · 브랜드 콘텐츠</p>
+  <a href="#stage">맨 위로</a>
+</footer>
 </main>
 <script src="assets/shutter/meta.js"></script>
 <script src="assets/reel-meta.js"></script>
 <script src="app.js"></script>
+<script src="sections.js"></script>
 </body>
 </html>
