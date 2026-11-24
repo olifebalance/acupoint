@@ -1,9 +1,10 @@
 """셔터 영상 한 편을 사이트용 프레임과 치수 파일로 바꾼다.
 
-쓰는 법:  python3 tools/build_shutter.py source/shutter-draft-480p.mp4
+쓰는 법:  python3 tools/build_shutter.py source/shutter-1080p-bytedance.mp4 [가로 폭, 기본 720]
 결과:     assets/shutter/f_000.webp ... , assets/shutter/poster.jpg, assets/shutter/meta.js
 
-화질을 올린 영상이 생기면 같은 명령에 그 파일을 넣어 다시 돌리면 된다.
+셔터 영상을 바꾸려면 같은 명령에 새 파일을 넣어 다시 돌리면 된다.
+가로 폭은 폰에서 끊기지 않게 720으로 줄여 쓴다(원본이 더 작으면 그대로).
 조건: 카메라가 고정이고, 셔터 뒤 가게 안이 검게 나온 영상.
 """
 import glob, json, os, subprocess, sys, tempfile
@@ -11,12 +12,14 @@ import numpy as np
 from PIL import Image
 
 src = sys.argv[1]
+WIDTH = int(sys.argv[2]) if len(sys.argv) > 2 else 720
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 out = os.path.join(root, "assets", "shutter")
 DARK = 30  # 이 밝기보다 어두우면 가게 안으로 본다
 
 tmp = tempfile.mkdtemp()
-subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, os.path.join(tmp, "f_%04d.png")], check=True)
+subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf", f"scale='min({WIDTH},iw)':-2:flags=lanczos",
+                os.path.join(tmp, "f_%04d.png")], check=True)
 files = sorted(glob.glob(os.path.join(tmp, "f_*.png")))
 luma = lambda p: np.asarray(Image.open(p).convert("L"), dtype=np.float32)
 
@@ -27,7 +30,9 @@ cols = L[int(330 * k):int(640 * k)].mean(axis=0)
 dark = np.where(cols < DARK - 2)[0]; x0, x1 = int(dark.min()), int(dark.max())
 m = int(12 * k)
 frac = (L[:, x0 + m:x1 - m] < DARK).mean(axis=1)
-y_top = int(np.where(frac > 0.9)[0].min()); y_bot = int(np.where(frac > 0.5)[0].max())
+y_top = y_bot = int(600 * k)          # 문 한가운데에서 위아래로 넓혀 간다
+while y_top > 0 and frac[y_top - 1] > 0.9: y_top -= 1
+while y_bot < H - 1 and frac[y_bot + 1] > 0.5: y_bot += 1
 
 # 프레임마다 셔터 아랫단 높이를 잰다 (바닥에서 위로 훑는다)
 edges = []
@@ -46,7 +51,7 @@ b = min(int(np.where(edges <= edges.min() + 1)[0].min()) + 2, len(files) - 1)
 for old in glob.glob(os.path.join(out, "f_*.webp")): os.remove(old)
 os.makedirs(out, exist_ok=True)
 for i, idx in enumerate(range(a, b + 1)):
-    Image.open(files[idx]).convert("RGB").save(os.path.join(out, f"f_{i:03d}.webp"), quality=80, method=6)
+    Image.open(files[idx]).convert("RGB").save(os.path.join(out, f"f_{i:03d}.webp"), quality=76, method=6)
 Image.open(files[a]).convert("RGB").save(os.path.join(out, "poster.jpg"), quality=84)
 
 meta = {"w": W, "h": H, "n": b - a + 1,

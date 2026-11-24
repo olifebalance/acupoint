@@ -8,7 +8,7 @@ const $ = id => document.getElementById(id);
 const stage = $('stage'), front = $('front'), cv = $('shutter'), cx = cv.getContext('2d');
 const sign = $('sign'), slat = $('slat'), slatCopy = $('slatCopy'), pullWrap = $('pullWrap'), pull = $('pull');
 const video = $('video'), glow = $('glow'), gx = glow.getContext('2d');
-const top = $('top'), sound = $('sound'), title = $('title');
+const top = $('top'), sound = $('sound'), title = $('title'), lang = $('lang');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // 영상 프레임 안에서의 자리 (프레임 크기에 대한 비율)
@@ -29,7 +29,7 @@ for (let i = 0; i < M.n; i++) {
 
 /* ── 배치 ── */
 let vw = 0, vh = 0, dpr = 1, s = 1, ox = 0, oy = 0, fw = 0, fh = 0;
-let p = 0, cur = 0, done = false, drag = null, raf = 0, anim = 0, muted = false;
+let p = 0, cur = 0, done = false, drag = null, raf = 0, anim = 0, muted = false, en = false;
 
 function place(el, x, y, w, h) {
   el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.width = w + 'px'; el.style.height = h + 'px';
@@ -48,7 +48,7 @@ function layout() {
   const hx = ox + M.hole.x0 * s, hw = (M.hole.x1 - M.hole.x0) * s;
   const ht = oy + SLAT_TOP * fh, hb = oy + M.hole.yb * s;
   place(slat, hx, ht, hw, hb - ht);
-  slatCopy.style.fontSize = 66 * u + 'px';
+  slatCopy.style.fontSize = (en ? 40 : 66) * u + 'px';
   front.style.transformOrigin = `${hx + hw / 2}px ${(oy + M.edges[M.n - 1] * s + hb) / 2}px`;
   draw();
 }
@@ -76,7 +76,7 @@ function draw() {
       drawFrame(f0, ox - k * fw, k % 2 === 1);
       drawFrame(f0, ox + k * fw, k % 2 === 1);
     }
-    cx.fillStyle = 'rgba(12,9,6,.42)';
+    cx.fillStyle = 'rgba(14,21,36,.45)';
     cx.fillRect(0, 0, ox, vh); cx.fillRect(ox + fw, 0, vw - ox - fw, vh);
   }
   drawFrame(im, ox, false);
@@ -196,6 +196,21 @@ $('reset').addEventListener('click', () => {
   front.hidden = false; done = false;
   setP(0);
 });
+
+/* ── 한글·영문 비교 (정해지면 뺀다) ── */
+function setLang(v) {
+  en = v;
+  stage.classList.toggle('en', en);
+  document.querySelectorAll('[data-en]').forEach(el => {
+    const parts = (en ? el.dataset.en : el.dataset.ko).split('|');
+    el.innerHTML = el.classList.contains('headline')
+      ? parts.map(t => `<span class="ln"><span>${t}</span></span>`).join('')
+      : parts.join('<br>');
+  });
+  lang.textContent = en ? '한글로 보기' : 'ENG로 보기';
+  layout();
+}
+lang.addEventListener('click', () => setLang(!en));
 
 addEventListener('resize', layout);
 layout();

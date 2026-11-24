@@ -9,7 +9,7 @@ cd mimo-open && python3 -m http.server 8790   # http://localhost:8790
 
 ## 무엇이 되나
 
-1. 닫힌 가게 셔터가 화면을 채운다. 손가락이나 마우스로 위로 밀면 셔터가 손을 따라 올라간다.
+1. 닫힌 스토어 셔터가 화면을 채운다. 손가락이나 마우스로 위로 밀면 셔터가 손을 따라 올라간다.
 2. 조금 올리고 손을 떼면 셔터가 끝까지 올라가고, 그 순간 음악과 함께 작품 다섯 편이 박자에 맞춰 컷으로 나온다.
 3. 화면이 가게 안으로 들어가고, 쇼릴 끝에 제목이 박힌다.
 
@@ -20,11 +20,25 @@ cd mimo-open && python3 -m http.server 8790   # http://localhost:8790
 | 파일 | 내용 |
 | --- | --- |
 | `index.html` `style.css` `app.js` | 첫 화면 |
-| `assets/shutter/` | 셔터 프레임 95장(WebP), 치수 파일 `meta.js` |
+| `assets/shutter/` | 셔터 프레임 99장(WebP, 720×1278), 치수 파일 `meta.js` |
 | `assets/showreel.mp4` | 작품 다섯 편을 박자에 맞춰 자른 쇼릴(540×960, 약 14초, 음악 포함) |
-| `source/shutter-draft-480p.mp4` | 셔터 원본 영상. ZCRE Seedance 2.5 드래프트(480×854, 6초) |
-| `tools/build_shutter.py` | 셔터 영상을 프레임과 치수 파일로 바꾼다. 화질을 올린 영상이 생기면 다시 돌린다 |
+| `assets/works/` | 작품 영상 5편(540×960). 쇼릴의 재료 |
+| `source/shutter-draft-480p.mp4` | 셔터 원본. ZCRE Seedance 2.5 드래프트(480×854, 6초) |
+| `source/shutter-1080p-bytedance.mp4` | 위 영상을 바이트댄스 업스케일 standard로 올린 것(1080×1918). 지금 사이트가 쓰는 원본 |
+| `tools/build_shutter.py` | 셔터 영상을 프레임과 치수 파일로 바꾼다 |
+| `tools/build_reel.py` | 작품 영상을 음악 박자에 맞춰 잘라 쇼릴을 만든다 |
 | `fonts/` | Pretendard(한글 2,350자 + 라틴), Unbounded(로고). 둘 다 SIL OFL |
+
+## 영상을 바꾸려면
+
+- 쇼릴: `assets/works/`의 작품 파일을 바꾸고 `tools/build_reel.py`의 `SEGS`(작품, 시작 초, 박 수)를 고친 뒤 `python3 tools/build_reel.py 음악.mp3 효과음.wav`.
+- 셔터: 새 영상으로 `python3 tools/build_shutter.py 새영상.mp4`. 카메라가 고정이고 셔터 뒤가 검게 나온 영상이어야 한다.
+- 음악 파일은 저장소에 넣지 않는다. Epidemic Sound 커넥터로 그때 받는다.
+
+## 색과 글
+
+- 색: 자료방 「배색 레퍼런스」 B10 올드머니 5번 Cream `#F3EAD3` → Navy `#1D2A47` 두 색. 바탕 `#0E1524`는 네이비를 어둡게 한 값.
+- 한글·영문 전환 버튼은 비교용이다. 정해지면 뺀다.
 
 ## 소리
 

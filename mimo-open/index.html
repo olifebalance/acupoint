@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>MIMO — 문을 열면, 광고가 시작됩니다</title>
 <meta name="description" content="MIMO 1인 광고 스튜디오. 광고 영상, 상세페이지, 스토어 콘텐츠를 기획부터 편집까지 미모가 직접 만듭니다.">
-<meta name="theme-color" content="#0c0906">
+<meta name="theme-color" content="#0E1524">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,13 +20,13 @@
 
   <!-- 앞: 가게 셔터 -->
   <div class="front" id="front">
-    <canvas class="shutter" id="shutter" role="img" aria-label="아침 햇살이 드는 작은 가게. 셔터가 내려져 있습니다."></canvas>
+    <canvas class="shutter" id="shutter" role="img" aria-label="아침 햇살이 드는 스토어. 셔터가 내려져 있습니다."></canvas>
     <div class="sign" id="sign" aria-hidden="true">
       <b>MIMO</b>
-      <span>1인 광고 스튜디오</span>
+      <span data-ko="1인 광고 스튜디오" data-en="AD STUDIO">1인 광고 스튜디오</span>
     </div>
     <div class="slat" id="slat">
-      <h1 class="slat-copy" id="slatCopy">오늘도<br>가게 문을<br>엽니다.</h1>
+      <h1 class="slat-copy" id="slatCopy" data-ko="오늘도|스토어를|엽니다." data-en="Your store|opens|today.">오늘도<br>스토어를<br>엽니다.</h1>
     </div>
     <div class="pull-wrap" id="pullWrap">
       <button class="pull" id="pull" type="button">
@@ -35,6 +35,7 @@
       </button>
       <p class="pull-note">셔터가 올라가면 음악이 나옵니다</p>
     </div>
+    <button class="chip lang" id="lang" type="button">ENG로 보기</button>
   </div>
 
   <!-- 셔터가 열린 뒤 -->
@@ -45,7 +46,7 @@
 
   <section class="title" id="title" hidden aria-live="polite">
     <p class="eyebrow">MIMO · 1인 광고 스튜디오</p>
-    <h2 class="headline">
+    <h2 class="headline" data-ko="문을 열면,|광고가|시작됩니다." data-en="Doors open.|Your ad|begins.">
       <span class="ln"><span>문을 열면,</span></span>
       <span class="ln"><span>광고가</span></span>
       <span class="ln"><span>시작됩니다.</span></span>
@@ -55,12 +56,12 @@
       <button class="btn btn-solid" id="replay" type="button">영상 다시 보기</button>
       <button class="btn" id="reset" type="button">셔터 다시 내리기</button>
     </div>
-    <p class="stage-note">첫 화면 시안입니다. 작업물과 문의 화면은 다음 단계에서 이어집니다.</p>
+    <p class="stage-note">첫 화면 시안입니다. 작업물과 문의 화면은 다음 단계에서 이어집니다.<br>한글·영문 전환 버튼은 비교용이며 정해지면 뺍니다.</p>
   </section>
 
   <noscript>
     <div class="nojs">
-      <img src="assets/shutter/poster.jpg" alt="아침 햇살이 드는 작은 가게의 닫힌 셔터">
+      <img src="assets/shutter/poster.jpg" alt="아침 햇살이 드는 스토어의 닫힌 셔터">
       <p>MIMO · 1인 광고 스튜디오. 화면을 움직이려면 자바스크립트를 켜 주세요.</p>
     </div>
   </noscript>
