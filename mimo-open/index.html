@@ -14,7 +14,7 @@
   <!-- 뒤: 셔터 안에서 나오는 쇼릴 -->
   <div class="reel" id="reel" aria-hidden="true">
     <canvas class="reel-glow" id="glow" width="36" height="64"></canvas>
-    <video class="reel-video" id="video" src="assets/showreel.mp4" poster="assets/showreel-poster.jpg" playsinline preload="auto"></video>
+    <video class="reel-video" id="video" src="assets/showreel.mp4" poster="assets/showreel-poster.jpg" playsinline preload="metadata"></video>
     <div class="reel-scrim"></div>
   </div>
 
@@ -48,6 +48,8 @@
     <span class="logo">MIMO</span>
     <button class="chip" id="sound" type="button" aria-pressed="true">소리 끄기</button>
   </header>
+
+  <button class="tap" id="tap" type="button" hidden>눌러서 소리 켜기</button>
 
   <section class="title" id="title" hidden aria-live="polite">
     <p class="eyebrow">MIMO · AD STUDIO</p>

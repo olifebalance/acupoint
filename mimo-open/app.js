@@ -8,7 +8,7 @@ const $ = id => document.getElementById(id);
 const stage = $('stage'), front = $('front'), cv = $('shutter'), cx = cv.getContext('2d');
 const sign = $('sign'), slat = $('slat'), slatCopy = $('slatCopy'), pullWrap = $('pullWrap'), pull = $('pull');
 const video = $('video'), glow = $('glow'), gx = glow.getContext('2d');
-const top = $('top'), sound = $('sound'), title = $('title'), say = $('say'), sayL = $('sayL');
+const top = $('top'), sound = $('sound'), title = $('title'), say = $('say'), sayL = $('sayL'), tap = $('tap');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 // 영상 프레임 안에서의 자리 (프레임 크기에 대한 비율)
@@ -149,14 +149,19 @@ stage.addEventListener('wheel', e => {
 addEventListener('keydown', e => { if (!done && e.key === 'ArrowUp') { e.preventDefault(); open(); } });
 
 /* ── 열림 ── */
+let watch = 0, blobUrl = '';
+function askTap(text) { tap.textContent = text; tap.hidden = false; }
 function play() {
-  video.currentTime = 0;
+  tap.hidden = true;
+  try { video.currentTime = 0; } catch (e) {}
   video.muted = muted;
   const pr = video.play();
-  if (pr) pr.catch(() => {               // 소리가 막힌 경우: 소리 없이 재생하고 버튼으로 알린다
+  if (pr) pr.catch(() => {               // 소리가 막힌 경우: 소리 없이 재생하고, 한 번 눌러 켜게 한다
     muted = true; video.muted = true; syncSound(true);
-    video.play().catch(() => {});
+    video.play().then(() => askTap('눌러서 소리 켜기'), () => askTap('눌러서 영상과 소리 켜기'));
   });
+  clearTimeout(watch);                   // 재생이 시작되지 않은 경우(아이폰 등): 눌러서 시작하게 한다
+  watch = setTimeout(() => { if (done && video.currentTime < 0.05) askTap('눌러서 영상과 소리 켜기'); }, 1500);
 }
 function open() {
   done = true;
@@ -208,12 +213,26 @@ function syncSound(nudge) {
 }
 sound.addEventListener('click', () => { muted = !muted; video.muted = muted; syncSound(); });
 $('replay').addEventListener('click', () => { hideTitle(); cut = -1; play(); });
+tap.addEventListener('click', () => {    // 누르는 동작은 어느 브라우저에서나 소리 재생이 허락된다
+  if (blobUrl && video.src !== blobUrl && video.currentTime < 0.05) video.src = blobUrl;
+  muted = false; syncSound(); hideTitle(); cut = -1;
+  play();
+});
 $('reset').addEventListener('click', () => {
   video.pause(); video.currentTime = 0;
-  hideTitle(); top.hidden = true; say.hidden = true; cut = -1;
+  hideTitle(); top.hidden = true; say.hidden = true; tap.hidden = true; cut = -1; clearTimeout(watch);
   front.getAnimations().forEach(a => a.cancel());
   front.hidden = false; done = false;
   setP(0);
+});
+
+// 영상을 통째로 받아 둔다. 아이폰은 서버가 부분 전송을 지원하지 않으면 영상을 재생하지 못하기 때문이다
+fetch('assets/showreel.mp4').then(r => r.ok ? r.blob() : Promise.reject()).then(b => {
+  blobUrl = URL.createObjectURL(new Blob([b], { type: 'video/mp4' }));
+  if (!done) video.src = blobUrl;
+}).catch(() => {});
+video.addEventListener('error', () => {  // 받아 둔 영상을 쓸 수 없는 환경이면 원래 주소로 돌아간다
+  if (blobUrl && video.src === blobUrl) { blobUrl = ''; video.src = 'assets/showreel.mp4'; }
 });
 
 addEventListener('resize', layout);

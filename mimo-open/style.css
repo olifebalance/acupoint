@@ -81,6 +81,10 @@ button:focus-visible{outline:3px solid var(--cream);outline-offset:3px}
   padding:calc(14px + env(safe-area-inset-top,0px)) var(--gut-r) 0 var(--gut-l);animation:fadein .5s .5s both}
 .logo{font-family:var(--logo);font-weight:900;font-size:17px;letter-spacing:.08em;text-shadow:0 1px 10px rgba(14,21,36,.7)}
 
+.tap{position:absolute;left:50%;top:50%;translate:-50% -50%;min-height:60px;padding:0 30px;border-radius:999px;border:0;
+  background:var(--cream);color:var(--navy);font-weight:900;font-size:18px;letter-spacing:-.01em;white-space:nowrap;
+  box-shadow:0 10px 40px rgba(14,21,36,.55);animation:fadein .3s both}
+
 .title{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;gap:14px;align-items:flex-start;
   padding:0 var(--gut-r) calc(22px + env(safe-area-inset-bottom,0px)) var(--gut-l);max-width:760px}
 .wide .title{left:50%;right:auto;translate:-50% 0;width:min(100vh*.5625,100%);padding-left:26px;padding-right:26px}
