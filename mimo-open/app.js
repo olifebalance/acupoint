@@ -27,16 +27,25 @@ const PULL = 0.58;            // 화면 높이의 이만큼을 밀어야 다 올
 
 /* ── 프레임 ── */
 const frames = new Array(M.n);
-for (let i = 0; i < M.n; i++) {
+function loadFrame(i, then) {
   const im = new Image();
   im.decoding = 'async';
-  im.onload = () => { frames[i] = im; if (i === 0 || i === cur) draw(); };
+  im.onload = () => { frames[i] = im; if (i === 0 || i === cur) draw(); if (then) then(); };
+  if (then) im.onerror = then;
   im.src = `${M.dir || 'assets/shutter'}/f_${String(i).padStart(3, '0')}.webp`;
 }
+// 닫힌 셔터 첫 장을 맨 먼저 받는다. 그 전에는 화면을 어둡게 비워 두어(.loading) 뒤의 쇼릴 그림이 비치지 않게 한다
+let waiting = M.side ? 2 : 1;
+function reveal() {
+  if (--waiting) return;
+  stage.classList.remove('loading');
+  front.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out' });
+}
+loadFrame(0, () => { reveal(); for (let i = 1; i < M.n; i++) loadFrame(i); });
 
 // 사람이 나오는 셔터 영상이면, 넓은 화면의 양옆에는 사람 없는 닫힌 스토어 그림을 따로 쓴다
 let sideIm = null;
-if (M.side) { const im = new Image(); im.onload = () => { sideIm = im; draw(); }; im.src = `${M.dir}/side.webp`; }
+if (M.side) { const im = new Image(); im.onload = () => { sideIm = im; draw(); reveal(); }; im.onerror = reveal; im.src = `${M.dir}/side.webp`; }
 if (M.person) { stage.classList.add('with-person'); slatCopy.innerHTML = '오늘도<br><em class="pt">스토어</em>를 엽니다.'; }
 
 /* ── 배치 ── */
