@@ -202,7 +202,7 @@ function open() {
   top.hidden = false; say.hidden = false; syncSound();
   // 무거운 셔터처럼 천천히 마저 올라간다. 넓은 화면은 움직이는 거리가 길어 같은 시간이면 휙 지나가 보이므로 더 느리게 올린다
   if (stage.classList.contains('wide')) tween(1, 800 + 1200 * (1 - p), enter, easeHeavy);
-  else tween(1, 520 + 780 * (1 - p), enter);
+  else tween(1, 640 + 960 * (1 - p), enter);
 }
 function enter() {                        // 가게 안으로 들어간다
   if (reduce) {
