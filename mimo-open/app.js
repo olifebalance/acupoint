@@ -121,16 +121,17 @@ function draw() {
 
 /* ── 움직임 ── */
 const easeOut = t => 1 - Math.pow(1 - t, 3);
+const easeHeavy = t => (1 - Math.cos(Math.PI * t)) / 2;   // 묵직하게 출발해서 천천히 멎는다
 function setP(v) {
   p = Math.min(1, Math.max(0, v));
   if (!raf) raf = requestAnimationFrame(() => { raf = 0; draw(); });
 }
-function tween(to, ms, then) {
+function tween(to, ms, then, ease = easeOut) {
   cancelAnimationFrame(anim);
   const from = p, t0 = performance.now();
   const step = now => {
     const t = Math.min(1, (now - t0) / ms);
-    setP(from + (to - from) * easeOut(t));
+    setP(from + (to - from) * ease(t));
     if (t < 1) anim = requestAnimationFrame(step); else if (then) then();
   };
   anim = requestAnimationFrame(step);
@@ -199,7 +200,9 @@ function open() {
   play();
   document.dispatchEvent(new Event('mimo:open'));   // 아래 화면의 영상도 이 동작 안에서 소리 허락을 받아 둔다
   top.hidden = false; say.hidden = false; syncSound();
-  tween(1, 520 + 780 * (1 - p), enter);   // 무거운 셔터처럼 천천히 마저 올라간다
+  // 무거운 셔터처럼 천천히 마저 올라간다. 넓은 화면은 움직이는 거리가 길어 같은 시간이면 휙 지나가 보이므로 더 느리게 올린다
+  if (stage.classList.contains('wide')) tween(1, 800 + 1200 * (1 - p), enter, easeHeavy);
+  else tween(1, 520 + 780 * (1 - p), enter);
 }
 function enter() {                        // 가게 안으로 들어간다
   if (reduce) {
