@@ -275,7 +275,12 @@ video.addEventListener('error', () => {  // 받아 둔 영상을 쓸 수 없는 
   if (blobUrl && video.src === blobUrl) { blobUrl = ''; video.src = 'assets/showreel.mp4'; }
 });
 
-new IntersectionObserver(es => { if (done && !es[0].isIntersecting) video.pause(); }, { threshold: 0.25 }).observe(stage);
+// 첫 화면을 벗어나면 쇼릴을 멈추고, 돌아오면 멈춘 곳부터 이어서 튼다
+new IntersectionObserver(es => {
+  if (!done) return;
+  if (!es[0].isIntersecting) video.pause();
+  else if (video.paused && !video.ended) video.play().catch(() => {});
+}, { threshold: 0.25 }).observe(stage);
 
 addEventListener('resize', layout);
 layout();
