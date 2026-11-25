@@ -28,10 +28,11 @@ function start(v, wantSound) {
    폰은 "누르는 동작으로 한 번 허락받은 영상 태그"에만 소리를 허락하기 때문에, 태그가 작품마다 따로면 소리가 났다 안 났다 한다. */
 // 작품을 바꾸려면 이 목록과 assets/works/ 의 파일을 바꾼다
 const WORKS = [
-  { id: 'burger', title: '한입의 상상', cat: '음식 · 제품 광고', by: '버거스테이지' },
-  { id: 'andz', title: '새로운 시즌의 시작', cat: '패션 · 스토어 오픈', by: 'ANDZ' },
+  // 쇼릴이 버거로 끝나므로 첫 작품은 질감이 다른 패션으로 둔다. from: 로고 화면을 건너뛰고 틀기 시작하는 지점(초)
+  { id: 'andz', title: '새로운 시즌의 시작', cat: '패션 · 스토어 오픈', by: 'ANDZ', from: 2.6 },
   { id: 'bakery', title: '빵이 건네는 온기', cat: '베이커리 · 브랜드 영상', by: '밤가시베이커리' },
   { id: 'book', title: '책에서, 일상으로', cat: '협업 브랜드 · 도서 소개', by: '오라이프밸런스' },
+  { id: 'burger', title: '한입의 상상', cat: '음식 · 제품 광고', by: '버거스테이지' },
   { id: 'wuxia', title: '상상이 장면이 될 때', cat: '무협 · 스토리 영상', by: '창작 콘셉트' },
 ];
 const works = $('works'), pin = $('worksPin'), stack = $('worksStack'), edge = $('worksEdge'), bg = $('worksBg'), tapSound = $('worksSound');
@@ -48,6 +49,12 @@ function fetchWork(i) {
 }
 const wv = document.createElement('video');
 wv.setAttribute('playsinline', ''); wv.playsInline = true; wv.loop = true; wv.preload = 'auto';
+const skipIntro = () => {                          // 건너뛸 수 없는 상황(서버가 중간부터 받기를 못 해 줄 때)이면 처음부터 튼다
+  const w = WORKS[active], sk = wv.seekable;
+  if (w && w.from && wv.currentTime < w.from - 0.1 && sk.length && sk.end(sk.length - 1) >= w.from) wv.currentTime = w.from;
+};
+wv.addEventListener('loadedmetadata', skipIntro);
+wv.addEventListener('timeupdate', skipIntro);      // 되풀이해 틀 때도 건너뛴다
 wv.addEventListener('error', () => { const w = WORKS[active]; if (w && wv.src.startsWith('blob:')) { delete blobs[w.id]; wv.src = src(w); playWork(); } });
 const layers = WORKS.map((w, i) => {
   const el = document.createElement('div');

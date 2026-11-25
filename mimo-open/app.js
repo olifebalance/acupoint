@@ -46,6 +46,8 @@ loadFrame(0, () => { reveal(); for (let i = 1; i < M.n; i++) loadFrame(i); });
 // 사람이 나오는 셔터 영상이면, 넓은 화면의 양옆에는 사람 없는 닫힌 스토어 그림을 따로 쓴다
 let sideIm = null;
 if (M.side) { const im = new Image(); im.onload = () => { sideIm = im; draw(); reveal(); }; im.onerror = reveal; im.src = `${M.dir}/side.webp`; }
+// 누르기와 밀어 올리기가 둘 다 된다. 마우스로 쓰는 기기에는 누르라고 알린다
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) pull.querySelector('.pull-text').textContent = '눌러서 셔터 열기';
 if (M.person) { stage.classList.add('with-person'); slatCopy.innerHTML = '오늘도<br><em class="pt">스토어</em>를 엽니다.'; }
 
 /* ── 배치 ── */
