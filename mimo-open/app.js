@@ -3,8 +3,8 @@
    뒤: 구멍으로 쇼릴 영상이 보인다. 손을 떼면 영상과 음악이 시작된다. */
 (() => {
 'use strict';
-// 주소 끝에 #mimo 를 붙이면 미모가 셔터를 여는 판을 쓴다(비교용)
-const M = (location.hash === '#mimo' && window.SHUTTERS && window.SHUTTERS['assets/shutter-mimo']) || window.SHUTTER, R = window.REEL;
+// 미모가 셔터를 여는 판이 기본이다. 주소 끝에 #base 를 붙이면 사람 없는 판을 쓴다(비교용)
+const M = (location.hash !== '#base' && window.SHUTTERS && window.SHUTTERS['assets/shutter-mimo']) || window.SHUTTER, R = window.REEL;
 const $ = id => document.getElementById(id);
 const stage = $('stage'), front = $('front'), cv = $('shutter'), cx = cv.getContext('2d');
 const sign = $('sign'), slat = $('slat'), slatCopy = $('slatCopy'), pullWrap = $('pullWrap'), pull = $('pull');
