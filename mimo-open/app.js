@@ -3,7 +3,8 @@
    뒤: 구멍으로 쇼릴 영상이 보인다. 손을 떼면 영상과 음악이 시작된다. */
 (() => {
 'use strict';
-const M = window.SHUTTER, R = window.REEL;
+// 주소 끝에 #mimo 를 붙이면 미모가 셔터를 여는 판을 쓴다(비교용)
+const M = (location.hash === '#mimo' && window.SHUTTERS && window.SHUTTERS['assets/shutter-mimo']) || window.SHUTTER, R = window.REEL;
 const $ = id => document.getElementById(id);
 const stage = $('stage'), front = $('front'), cv = $('shutter'), cx = cv.getContext('2d');
 const sign = $('sign'), slat = $('slat'), slatCopy = $('slatCopy'), pullWrap = $('pullWrap'), pull = $('pull');
@@ -30,8 +31,13 @@ for (let i = 0; i < M.n; i++) {
   const im = new Image();
   im.decoding = 'async';
   im.onload = () => { frames[i] = im; if (i === 0 || i === cur) draw(); };
-  im.src = `assets/shutter/f_${String(i).padStart(3, '0')}.webp`;
+  im.src = `${M.dir || 'assets/shutter'}/f_${String(i).padStart(3, '0')}.webp`;
 }
+
+// 사람이 나오는 셔터 영상이면, 넓은 화면의 양옆에는 사람 없는 닫힌 스토어 그림을 따로 쓴다
+let sideIm = null;
+if (M.side) { const im = new Image(); im.onload = () => { sideIm = im; draw(); }; im.src = `${M.dir}/side.webp`; }
+if (M.person) { stage.classList.add('with-person'); slatCopy.innerHTML = '오늘도<br><em class="pt">스토어</em>를 엽니다.'; }
 
 /* ── 배치 ── */
 let vw = 0, vh = 0, dpr = 1, s = 1, ox = 0, oy = 0, fw = 0, fh = 0;
@@ -70,7 +76,7 @@ function layout() {
   const hx = ox + M.hole.x0 * s, hw = (M.hole.x1 - M.hole.x0) * s;
   const ht = oy + SLAT_TOP * fh, hb = oy + M.hole.yb * s;
   place(slat, hx, ht, hw, hb - ht);
-  slatCopy.style.fontSize = 66 * u + 'px';
+  slatCopy.style.fontSize = (M.person ? 44 : 66) * u + 'px';
   front.style.transformOrigin = `${hx + hw / 2}px ${(oy + M.edges[M.n - 1] * s + hb) / 2}px`;
   draw();
 }
@@ -90,10 +96,10 @@ function draw() {
   let im = frames[i];
   for (let k = i; !im && k >= 0; k--) im = frames[k];
   if (!im) return;
-  const f0 = frames[0] || im;
+  const f0 = M.side ? sideIm : (frames[0] || im);
   cx.setTransform(dpr, 0, 0, dpr, 0, 0);
   cx.clearRect(0, 0, vw, vh);
-  if (ox > 0.5) {                                  // 넓은 화면: 양옆에 닫힌 가게를 이어 세운다
+  if (ox > 0.5 && f0) {                            // 넓은 화면: 양옆에 닫힌 가게를 이어 세운다
     for (let k = 1; ox - (k - 1) * fw > 0; k++) {
       drawFrame(f0, ox - k * fw, k % 2 === 1);
       drawFrame(f0, ox + k * fw, k % 2 === 1);
@@ -101,7 +107,7 @@ function draw() {
   }
   drawFrame(im, ox, false);
   const e = M.edges[i];
-  if (e < M.edges[0] - 2) {                        // 열린 만큼 구멍을 뚫어 뒤의 영상을 보인다
+  if (!M.person && e < M.edges[0] - 2) {           // 열린 만큼 구멍을 뚫어 뒤의 영상을 보인다(사람이 나오는 영상은 프레임 자체가 뚫려 있다)
     const hx = ox + M.hole.x0 * s, hw = (M.hole.x1 - M.hole.x0) * s, hy = oy + e * s, hh = (M.hole.yb - e) * s;
     cx.clearRect(hx, hy, hw, hh);
     const sh = Math.min(hh, 70 * s);

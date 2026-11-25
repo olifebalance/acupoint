@@ -62,6 +62,8 @@ button:focus-visible{outline:3px solid var(--cream);outline-offset:3px}
 .slat{position:absolute;overflow:hidden;pointer-events:none}
 .slat-copy{position:absolute;left:7%;bottom:9%;margin:0;font-weight:900;line-height:1.08;letter-spacing:-.035em;color:var(--cream);
   text-shadow:0 .04em .16em rgba(14,21,36,.62),0 0 .7em rgba(14,21,36,.34);will-change:transform,opacity}
+/* 사람이 셔터 앞에 서는 영상: 글자를 셔터 위쪽으로 올려 사람과 겹치지 않게 한다 */
+.with-person .slat-copy{bottom:auto;top:5%}
 .pt{font-style:normal;color:var(--point)}
 .slat-copy .pt{color:var(--mint)}
 .wide .slat-copy .pt{color:var(--mint-wide)}
